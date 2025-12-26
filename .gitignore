@@ -47,10 +47,11 @@ automl_agent/output/*.md
 *.log
 flaml.log
 
-# Data files (optional - uncomment if you don't want to track data)
-# *.csv
-# *.parquet
-# *.xlsx
+# Data files
+data/
+*.csv
+*.parquet
+*.xlsx
 
 # Jupyter
 .ipynb_checkpoints/

@@ -124,6 +124,45 @@ AZURE_OPENAI_API_KEY=your_azure_openai_api_key_here
 python -m automl_agent.main --data data.csv --target target_column
 ```
 
+## Quick Start / Testing
+
+### 1. Generate Example Dataset
+
+```bash
+python generate_example_data.py
+```
+
+This creates `data/customer_churn.csv` with:
+- 1000 samples
+- 10 features (numerical + categorical)
+- Binary classification task
+- Some missing values to test preprocessing
+
+### 2. Run Test Script
+
+```bash
+# Make sure venv is activated
+source venv/bin/activate
+
+# Run the test
+./test_automl.sh
+```
+
+Or manually:
+
+```bash
+python -m automl_agent.main \
+  --data data/customer_churn.csv \
+  --target churn
+```
+
+### 3. Check Results
+
+After the run completes, check:
+- `automl_agent/output/model.joblib` - Best trained model
+- `automl_agent/output/metrics.json` - Performance metrics
+- `automl_agent/output/run_summary.json` - Complete execution trace
+
 ## Usage
 
 ### Basic Usage
