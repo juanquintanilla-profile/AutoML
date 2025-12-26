@@ -6,7 +6,7 @@ Uses LLM to decide the next action in the AutoML workflow.
 from typing import Dict, Any, Optional
 import json
 import os
-from openai import OpenAI
+from openai import OpenAI, AzureOpenAI
 from pathlib import Path
 
 
@@ -23,13 +23,34 @@ class PlannerAgent:
         self.config = config
         self.llm_config = config.get("llm", {})
 
-        # Initialize OpenAI client
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("OPENAI_API_KEY environment variable not set")
+        # Initialize OpenAI client (supports both OpenAI and Azure OpenAI)
+        provider = self.llm_config.get("provider", "openai")
 
-        self.client = OpenAI(api_key=api_key)
-        self.model = self.llm_config.get("model", "gpt-4-turbo-preview")
+        if provider == "azure":
+            # Azure OpenAI configuration
+            azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+            api_key = os.getenv("AZURE_OPENAI_API_KEY")
+            api_version = self.llm_config.get("api_version", "2024-02-15-preview")
+
+            if not azure_endpoint or not api_key:
+                raise ValueError("AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY environment variables must be set")
+
+            self.client = AzureOpenAI(
+                azure_endpoint=azure_endpoint,
+                api_key=api_key,
+                api_version=api_version,
+            )
+            # For Azure, model is the deployment name
+            self.model = self.llm_config.get("deployment_name", self.llm_config.get("model", "gpt-4"))
+        else:
+            # Standard OpenAI configuration
+            api_key = os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                raise ValueError("OPENAI_API_KEY environment variable not set")
+
+            self.client = OpenAI(api_key=api_key)
+            self.model = self.llm_config.get("model", "gpt-4-turbo-preview")
+
         self.temperature = self.llm_config.get("temperature", 0.7)
         self.max_tokens = self.llm_config.get("max_tokens", 2000)
 

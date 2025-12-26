@@ -1,4 +1,4 @@
-# AutoML Agent Configuration
+# AutoML Agent Configuration - Azure OpenAI Example
 
 # Budget Configuration
 budget:
@@ -7,19 +7,11 @@ budget:
   max_trials_per_model: 50
   early_stopping_rounds: 3  # Stop if no improvement
 
-# LLM Configuration
-# Supports both OpenAI and Azure OpenAI
+# LLM Configuration - Azure OpenAI
 llm:
-  # Provider: "openai" or "azure"
-  provider: "openai"
-
-  # For OpenAI: model name (e.g., "gpt-4-turbo-preview", "gpt-4", "gpt-3.5-turbo")
-  model: "gpt-4-turbo-preview"
-
-  # For Azure OpenAI: deployment name and API version
-  # deployment_name: "gpt-4"  # Your Azure deployment name (e.g., "gpt-41-mini")
-  # api_version: "2024-02-15-preview"  # Azure API version
-
+  provider: "azure"
+  deployment_name: "gpt-41-mini"  # Replace with your Azure deployment name
+  api_version: "2024-02-15-preview"
   temperature: 0.7
   max_tokens: 2000
 

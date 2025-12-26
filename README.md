@@ -77,9 +77,51 @@ pip install -r requirements.txt
 
 3. Set up environment variables:
 
+**For OpenAI:**
 ```bash
 cp .env.example .env
 # Edit .env and add your OPENAI_API_KEY
+```
+
+**For Azure OpenAI:**
+```bash
+cp .env.example .env
+# Edit .env and add:
+# - AZURE_OPENAI_ENDPOINT
+# - AZURE_OPENAI_API_KEY
+```
+
+## Configuration for Azure OpenAI
+
+If you're using **Azure OpenAI** (e.g., GPT-4.1-mini from Azure ML), follow these steps:
+
+### 1. Update `config.yaml`:
+
+```yaml
+llm:
+  provider: "azure"
+  deployment_name: "gpt-41-mini"  # Your Azure deployment name
+  api_version: "2024-02-15-preview"
+  temperature: 0.7
+  max_tokens: 2000
+```
+
+Or use the provided example:
+```bash
+cp automl_agent/config.azure.yaml automl_agent/config.yaml
+```
+
+### 2. Set environment variables in `.env`:
+
+```bash
+AZURE_OPENAI_ENDPOINT=https://your-resource-name.openai.azure.com/
+AZURE_OPENAI_API_KEY=your_azure_openai_api_key_here
+```
+
+### 3. Run as normal:
+
+```bash
+python -m automl_agent.main --data data.csv --target target_column
 ```
 
 ## Usage
