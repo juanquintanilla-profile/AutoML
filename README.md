@@ -93,14 +93,14 @@ cp .env.example .env
 
 ## Configuration for Azure OpenAI
 
-If you're using **Azure OpenAI** (e.g., GPT-4.1-mini from Azure ML), follow these steps:
+If you're using **Azure OpenAI** (e.g., GPT-4o-mini from Azure ML), follow these steps:
 
 ### 1. Update `config.yaml`:
 
 ```yaml
 llm:
   provider: "azure"
-  deployment_name: "gpt-41-mini"  # Your Azure deployment name
+  deployment_name: "gpt-4o-mini"  # Your Azure deployment name
   api_version: "2024-02-15-preview"
   temperature: 0.7
   max_tokens: 2000

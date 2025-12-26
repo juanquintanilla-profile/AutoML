@@ -17,7 +17,7 @@ llm:
   model: "gpt-4-turbo-preview"
 
   # For Azure OpenAI: deployment name and API version
-  # deployment_name: "gpt-4"  # Your Azure deployment name (e.g., "gpt-41-mini")
+  # deployment_name: "gpt-4o-mini"  # Your Azure deployment name
   # api_version: "2024-02-15-preview"  # Azure API version
 
   temperature: 0.7
