@@ -43,8 +43,8 @@ echo ""
 read -p "Press Enter to continue or Ctrl+C to cancel..."
 echo ""
 
-# Run AutoML
-python -m automl_agent.main \
+# Run AutoML (using the package module)
+python -m automl_agent \
   --data data/customer_churn.csv \
   --target churn \
   --config automl_agent/config.yaml \

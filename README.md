@@ -121,7 +121,7 @@ AZURE_OPENAI_API_KEY=your_azure_openai_api_key_here
 ### 3. Run as normal:
 
 ```bash
-python -m automl_agent.main --data data.csv --target target_column
+python -m automl_agent --data data.csv --target target_column
 ```
 
 ## Quick Start / Testing
@@ -151,7 +151,7 @@ source venv/bin/activate
 Or manually:
 
 ```bash
-python -m automl_agent.main \
+python -m automl_agent \
   --data data/customer_churn.csv \
   --target churn
 ```
@@ -168,7 +168,7 @@ After the run completes, check:
 ### Basic Usage
 
 ```bash
-python -m automl_agent.main \
+python -m automl_agent \
   --data path/to/data.csv \
   --target target_column_name
 ```
@@ -176,7 +176,7 @@ python -m automl_agent.main \
 ### With Custom Configuration
 
 ```bash
-python -m automl_agent.main \
+python -m automl_agent \
   --data path/to/data.csv \
   --target target_column_name \
   --config path/to/custom_config.yaml \
