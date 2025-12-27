@@ -147,5 +147,79 @@ def get_feature_target_split(
         X (features), y (target)
     """
     X = data.drop(columns=[target_column])
-    y = data[target_column]
+    y = data[target_column].copy()
     return X, y
+
+
+def infer_task_type(y: pd.Series, max_unique_for_classification: int = 20) -> str:
+    """
+    Infer whether task is classification or regression based on target.
+
+    Args:
+        y: Target variable
+        max_unique_for_classification: Max unique values to consider classification
+
+    Returns:
+        "classification" or "regression"
+    """
+    # Remove missing values for analysis
+    y_clean = y.dropna()
+
+    if len(y_clean) == 0:
+        raise ValueError("Target has no non-null values")
+
+    # If dtype is object or category, it's classification
+    if y.dtype in ['object', 'category']:
+        return "classification"
+
+    # If dtype is bool, it's classification
+    if y.dtype == 'bool':
+        return "classification"
+
+    # Check number of unique values
+    n_unique = y_clean.nunique()
+
+    # If few unique values, likely classification
+    if n_unique <= max_unique_for_classification:
+        return "classification"
+
+    # If many unique values and all integers, still might be classification
+    # but safer to treat as regression
+    if n_unique > max_unique_for_classification:
+        # Check if all values are integers
+        if np.all(y_clean == y_clean.astype(int)):
+            # Could be classification with many classes or regression
+            # Use threshold to decide
+            return "classification" if n_unique <= 100 else "regression"
+        else:
+            return "regression"
+
+    return "regression"
+
+
+def prepare_target(y: pd.Series, task_type: str) -> np.ndarray:
+    """
+    Prepare target variable for modeling.
+
+    Args:
+        y: Target variable
+        task_type: "classification" or "regression"
+
+    Returns:
+        Prepared target as numpy array
+    """
+    y_clean = y.copy()
+
+    if task_type == "classification":
+        # For classification, ensure integer type
+        if y.dtype in ['object', 'category', 'bool']:
+            # Use label encoding for categorical targets
+            from sklearn.preprocessing import LabelEncoder
+            le = LabelEncoder()
+            return le.fit_transform(y_clean)
+        else:
+            # Convert to int
+            return y_clean.astype(int).values
+    else:
+        # For regression, ensure float type
+        return y_clean.astype(float).values

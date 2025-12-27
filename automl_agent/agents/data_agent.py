@@ -40,6 +40,8 @@ class DataAgent:
         Returns:
             Dataset summary dictionary
         """
+        from ..tools.data_utils import infer_task_type
+
         summary = {
             "n_rows": len(data),
             "n_features": len(data.columns) - 1,
@@ -58,13 +60,15 @@ class DataAgent:
             summary["feature_types"][col] = str(data[col].dtype)
             summary["missing_values"][col] = int(data[col].isnull().sum())
 
-        # Analyze target
-        if data[target_column].dtype in ['object', 'category']:
-            summary["task_type"] = "classification"
+        # Infer task type using robust method
+        task_type = infer_task_type(data[target_column])
+        summary["task_type"] = task_type
+
+        # Analyze target based on task type
+        if task_type == "classification":
             summary["target_distribution"] = data[target_column].value_counts().to_dict()
             summary["n_classes"] = data[target_column].nunique()
         else:
-            summary["task_type"] = "regression"
             summary["target_distribution"] = {
                 "mean": float(data[target_column].mean()),
                 "std": float(data[target_column].std()),

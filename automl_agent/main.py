@@ -16,7 +16,7 @@ from .agents.data_agent import DataAgent
 from .agents.modeling_agent import ModelingAgent
 from .agents.hpo_agent import HPOAgent
 from .agents.eval_agent import EvaluationAgent
-from .tools.data_utils import load_data, split_data, validate_data, get_feature_target_split
+from .tools.data_utils import load_data, split_data, validate_data, get_feature_target_split, prepare_target
 from .tools.preprocessing import apply_preprocessing
 from .tools.logging import setup_logger, log_config, log_metrics, log_run_summary
 
@@ -172,8 +172,11 @@ def run_automl(
                 X_train, X_test, state.preprocessing_plan
             )
 
+            # Prepare target with correct type based on task
+            y_train_prepared = prepare_target(y_train, state.dataset_summary['task_type'])
+
             # Optimize models
-            optimized = hpo_agent.execute(state.pipeline_candidates, X_train_processed, y_train.values)
+            optimized = hpo_agent.execute(state.pipeline_candidates, X_train_processed, y_train_prepared)
             state.optimized_models = optimized
             state.total_trials += len(optimized)
             state.add_to_history("run_hpo_agent", {"n_optimized": len(optimized)})
@@ -187,11 +190,15 @@ def run_automl(
                 X_train, X_test, state.preprocessing_plan
             )
 
+            # Prepare targets with correct types
+            y_train_prepared = prepare_target(y_train, state.dataset_summary['task_type'])
+            y_test_prepared = prepare_target(y_test, state.dataset_summary['task_type'])
+
             # Evaluate models
             eval_results = eval_agent.execute(
                 state.optimized_models,
-                X_train_processed, y_train.values,
-                X_test_processed, y_test.values,
+                X_train_processed, y_train_prepared,
+                X_test_processed, y_test_prepared,
             )
 
             state.evaluation_results = eval_results["evaluation_results"]

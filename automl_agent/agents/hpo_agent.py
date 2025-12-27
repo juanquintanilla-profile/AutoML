@@ -52,6 +52,14 @@ class HPOAgent:
         Returns:
             Dictionary with best model and parameters
         """
+        # CRITICAL: Convert target to correct type for task
+        if task_type == "classification":
+            # For classification, ensure integer type
+            y_train_prepared = y_train.astype(int)
+        else:
+            # For regression, ensure float type
+            y_train_prepared = y_train.astype(float)
+
         automl = AutoML()
 
         automl_settings = {
@@ -60,9 +68,10 @@ class HPOAgent:
             "task": task_type,
             "log_file_name": "flaml.log",
             "seed": 42,
+            "verbose": 0,  # Reduce verbosity
         }
 
-        automl.fit(X_train, y_train, **automl_settings)
+        automl.fit(X_train, y_train_prepared, **automl_settings)
 
         return {
             "best_model": automl.model,
@@ -111,7 +120,7 @@ class HPOAgent:
             return score
 
         study = optuna.create_study(direction="maximize")
-        study.optimize(objective, n_trials=n_trials, show_progress_bar=True)
+        study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
 
         return {
             "best_params": study.best_params,
@@ -182,7 +191,19 @@ class HPOAgent:
         optimized_pipelines = []
 
         for candidate in pipeline_candidates:
-            optimized = self.optimize_pipeline(candidate, X_train, y_train)
-            optimized_pipelines.append(optimized)
+            try:
+                optimized = self.optimize_pipeline(candidate, X_train, y_train)
+                optimized_pipelines.append(optimized)
+            except Exception as e:
+                print(f"Warning: Failed to optimize {candidate['model_name']}: {str(e)}")
+                # Still add the candidate but mark as failed
+                optimized_pipelines.append({
+                    "model_name": candidate["model_name"],
+                    "optimized_model": candidate["model"],
+                    "best_params": {},
+                    "optimization_score": 0,
+                    "optimization_method": "failed",
+                    "error": str(e),
+                })
 
         return optimized_pipelines
