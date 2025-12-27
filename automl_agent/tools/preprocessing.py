@@ -51,7 +51,7 @@ class PreprocessingPipeline:
 
             if col in X_copy.columns:
                 imputer = SimpleImputer(strategy=strategy)
-                X_copy[col] = imputer.fit_transform(X_copy[[col]])
+                X_copy[col] = imputer.fit_transform(X_copy[[col]]).ravel()
                 self.imputers[col] = imputer
 
         # Encode categorical features
@@ -104,7 +104,7 @@ class PreprocessingPipeline:
         # Handle missing values
         for col, imputer in self.imputers.items():
             if col in X_copy.columns:
-                X_copy[col] = imputer.transform(X_copy[[col]])
+                X_copy[col] = imputer.transform(X_copy[[col]]).ravel()
 
         # Encode categorical features
         encoded_cols = []

@@ -68,30 +68,35 @@ class PlannerAgent:
         return """You are an AutoML planner agent. Your role is to orchestrate the machine learning workflow by deciding which actions to take next.
 
 You have access to the following agents:
-1. data_agent: Analyzes datasets and proposes preprocessing
-2. modeling_agent: Selects model families and builds pipelines
-3. hpo_agent: Optimizes hyperparameters using FLAML/Optuna
-4. eval_agent: Evaluates and compares models
+1. data_agent: Analyzes datasets and proposes preprocessing (run ONCE at the start)
+2. modeling_agent: Selects model families and builds pipelines (run ONCE to generate candidates)
+3. hpo_agent: Optimizes hyperparameters using FLAML/Optuna (run after modeling_agent)
+4. eval_agent: Evaluates and compares models (run after hpo_agent)
 
-Your task is to:
-- Decide which agent to run next based on the current state
-- Prioritize which models to optimize based on initial results
-- Decide when to stop (budget exhausted, target reached, no improvement)
+CRITICAL INSTRUCTIONS:
+- The state includes a "workflow_stage" with a "next_required_action" field
+- You MUST follow the next_required_action unless there's a strong reason not to (e.g., budget exhausted)
+- DO NOT run the same agent repeatedly!
+- Follow this strict sequence: data_agent -> modeling_agent -> hpo_agent -> eval_agent -> (iterate or stop)
+
+Workflow rules:
+1. If data_analyzed is false: MUST run_data_agent
+2. If data_analyzed is true but candidates_generated is false: MUST run_modeling_agent
+3. If candidates_generated is true but models_optimized is false: MUST run_hpo_agent
+4. If models_optimized is true but models_evaluated is false: MUST run_eval_agent
+5. If models_evaluated is true: decide to iterate (back to step 2) or stop based on budget/improvement
 
 Respond ONLY with a valid JSON object with this structure:
 {
   "action": "run_data_agent" | "run_modeling_agent" | "run_hpo_agent" | "run_eval_agent" | "stop",
-  "parameters": {
-    // action-specific parameters
-  },
+  "parameters": {},
   "reason": "brief explanation of the decision"
 }
 
 Consider:
 - Budget constraints (time, iterations, trials)
 - Current best score and improvements
-- Which models show promise
-- When to stop iterating
+- When to stop iterating (no improvement, budget exhausted)
 """
 
     def decide_next_action(self, state: Dict[str, Any]) -> Dict[str, Any]:
@@ -153,24 +158,43 @@ What should be the next action?"""
         Returns:
             Concise summary
         """
+        # Determine workflow stage
+        dataset_analyzed = state.get("dataset_summary") is not None
+        candidates_exist = len(state.get("pipeline_candidates", [])) > 0
+        models_optimized = len(state.get("optimized_models", [])) > 0
+        models_evaluated = len(state.get("evaluation_results", [])) > 0
+
         summary = {
             "iteration": state.get("iteration", 0),
             "status": state.get("status", "unknown"),
+            "workflow_stage": {
+                "data_analyzed": dataset_analyzed,
+                "candidates_generated": candidates_exist,
+                "models_optimized": models_optimized,
+                "models_evaluated": models_evaluated,
+                "next_required_action": (
+                    "run_data_agent" if not dataset_analyzed else
+                    "run_modeling_agent" if not candidates_exist else
+                    "run_hpo_agent" if not models_optimized else
+                    "run_eval_agent" if not models_evaluated else
+                    "iterate_or_stop"
+                )
+            },
             "budget": {
                 "max_iterations": self.config["budget"]["max_iterations"],
                 "max_time": self.config["budget"]["max_time_seconds"],
                 "elapsed_time": state.get("total_time", 0),
             },
             "dataset": {
-                "analyzed": state.get("dataset_summary") is not None,
-                "n_samples": state.get("dataset_summary", {}).get("n_rows", 0),
-                "n_features": state.get("dataset_summary", {}).get("n_features", 0),
-                "task_type": state.get("dataset_summary", {}).get("task_type", "unknown"),
+                "analyzed": dataset_analyzed,
+                "n_samples": (state.get("dataset_summary") or {}).get("n_rows", 0),
+                "n_features": (state.get("dataset_summary") or {}).get("n_features", 0),
+                "task_type": (state.get("dataset_summary") or {}).get("task_type", "unknown"),
             },
             "models": {
-                "candidates_generated": len(state.get("pipeline_candidates", [])),
-                "optimized": len(state.get("optimized_models", [])),
-                "evaluated": len(state.get("evaluation_results", [])),
+                "candidates_count": len(state.get("pipeline_candidates", [])),
+                "optimized_count": len(state.get("optimized_models", [])),
+                "evaluated_count": len(state.get("evaluation_results", [])),
             },
             "best_result": {
                 "model": state.get("best_model", {}).get("model_name") if state.get("best_model") else None,

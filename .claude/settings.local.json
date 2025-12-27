@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(source:*)",
+      "Bash(python -m automl_agent.main:*)",
+      "Bash(python -m automl_agent:*)",
+      "Bash(pip install:*)"
+    ]
+  }
+}

@@ -43,7 +43,7 @@ def save_final_artifacts(state: AutoMLState, config: Dict[str, Any], output_dir:
     if state.best_model and config["output"]["save_model"]:
         model_path = output_path / "model.joblib"
         joblib.dump(state.best_model, model_path)
-        print(f"✓ Model saved to {model_path}")
+        print(f"[OK] Model saved to {model_path}")
 
     # Save metrics
     if config["output"]["save_metrics"]:
@@ -54,7 +54,7 @@ def save_final_artifacts(state: AutoMLState, config: Dict[str, Any], output_dir:
             "all_results": state.evaluation_results,
         }
         log_metrics(metrics, output_dir)
-        print(f"✓ Metrics saved to {output_path / 'metrics.json'}")
+        print(f"[OK] Metrics saved to {output_path / 'metrics.json'}")
 
     # Save run summary
     if config["output"]["save_summary"]:
@@ -65,7 +65,7 @@ def save_final_artifacts(state: AutoMLState, config: Dict[str, Any], output_dir:
             "history": state.history,
         }
         log_run_summary(summary, output_dir)
-        print(f"✓ Summary saved to {output_path / 'run_summary.json'}")
+        print(f"[OK] Summary saved to {output_path / 'run_summary.json'}")
 
 
 def run_automl(
@@ -155,14 +155,14 @@ def run_automl(
             state.dataset_summary = result["dataset_summary"]
             state.preprocessing_plan = result["preprocessing_plan"]
             state.add_to_history("run_data_agent", result)
-            logger.info(f"✓ Data analysis complete: {state.dataset_summary['task_type']} task")
+            logger.info(f"[OK] Data analysis complete: {state.dataset_summary['task_type']} task")
 
         elif action == "run_modeling_agent":
             logger.info("Running Modeling Agent...")
             candidates = modeling_agent.execute(state.dataset_summary, state.preprocessing_plan)
             state.pipeline_candidates = candidates
             state.add_to_history("run_modeling_agent", {"n_candidates": len(candidates)})
-            logger.info(f"✓ Generated {len(candidates)} model candidates")
+            logger.info(f"[OK] Generated {len(candidates)} model candidates")
 
         elif action == "run_hpo_agent":
             logger.info("Running HPO Agent...")
@@ -180,7 +180,7 @@ def run_automl(
             state.optimized_models = optimized
             state.total_trials += len(optimized)
             state.add_to_history("run_hpo_agent", {"n_optimized": len(optimized)})
-            logger.info(f"✓ Optimized {len(optimized)} models")
+            logger.info(f"[OK] Optimized {len(optimized)} models")
 
         elif action == "run_eval_agent":
             logger.info("Running Evaluation Agent...")
@@ -216,7 +216,7 @@ def run_automl(
 
             state.add_to_history("run_eval_agent", comparison)
 
-            logger.info(f"✓ Evaluation complete")
+            logger.info(f"[OK] Evaluation complete")
             logger.info(f"  Best model: {best_model_name}")
             logger.info(f"  Best score: {best_score:.4f}")
 
