@@ -143,18 +143,26 @@ Full API documentation: http://localhost:8000/docs
 
 ## Monitoring with Logfire
 
-All API requests and AutoML jobs are automatically traced with Logfire:
+All API requests, LLM calls, and AutoML jobs are automatically traced with Logfire:
 
 1. Sign up at https://logfire.pydantic.dev (free tier available)
-2. Get your token and add to `.env`
-3. Start the API
-4. View real-time traces in the Logfire dashboard
+2. Get your token and add to `.env` file:
+   ```bash
+   LOGFIRE_TOKEN=your_token_here
+   ```
+3. Start the API (Logfire will auto-configure)
+4. Run some AutoML jobs
+5. View real-time traces in the Logfire dashboard
 
 You'll see:
-- All HTTP requests/responses
-- Job execution timelines
-- Errors with full stack traces
-- Performance metrics
+- **LLM Tokens and Costs**: Token usage, model costs, and latency for all OpenAI/Azure calls
+- **API Requests**: All HTTP requests/responses with timing
+- **Job Execution**: Complete AutoML job timelines with agent transitions
+- **Errors**: Full stack traces with context
+- **Performance**: Response times, throughput, and bottlenecks
+
+The PlannerAgent automatically instruments all OpenAI API calls, so you'll see detailed
+token usage graphs in the "LLM Tokens and Costs" dashboard.
 
 ## Outputs
 
