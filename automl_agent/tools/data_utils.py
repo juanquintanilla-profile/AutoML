@@ -178,23 +178,39 @@ def infer_task_type(y: pd.Series, max_unique_for_classification: int = 20) -> st
 
     # Check number of unique values
     n_unique = y_clean.nunique()
+    n_samples = len(y_clean)
 
-    # If few unique values, likely classification
-    if n_unique <= max_unique_for_classification:
+    # Calculate the ratio of unique values to samples
+    unique_ratio = n_unique / n_samples
+
+    # If few unique values (< 20) and low unique ratio, likely classification
+    if n_unique <= max_unique_for_classification and unique_ratio < 0.5:
         return "classification"
 
-    # If many unique values and all integers, still might be classification
-    # but safer to treat as regression
-    if n_unique > max_unique_for_classification:
-        # Check if all values are integers
-        if np.all(y_clean == y_clean.astype(int)):
-            # Could be classification with many classes or regression
-            # Use threshold to decide
-            return "classification" if n_unique <= 100 else "regression"
-        else:
+    # If unique ratio is very high (> 0.95), it's likely regression
+    # This catches continuous variables with many unique values
+    if unique_ratio > 0.95:
+        return "regression"
+
+    # For intermediate cases, check the range and distribution
+    if np.all(y_clean == y_clean.astype(int)):
+        # All values are integers
+        value_range = y_clean.max() - y_clean.min()
+
+        # If the range is large relative to unique values, it's likely regression
+        # (e.g., scores 0-100, prices, ages)
+        if value_range > n_unique * 2:
             return "regression"
 
-    return "regression"
+        # If few unique values relative to range, and low count, classification
+        if n_unique <= 20:
+            return "classification"
+
+        # Many unique integer values, treat as regression
+        return "regression"
+    else:
+        # Float values, almost certainly regression
+        return "regression"
 
 
 def prepare_target(y: pd.Series, task_type: str) -> np.ndarray:
