@@ -2,12 +2,23 @@
 FastAPI main application.
 """
 
+# Load environment variables FIRST (before any other imports)
+from dotenv import load_dotenv
+load_dotenv()
+
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 from datetime import datetime
-import logfire
+
+# Try to import logfire, but make it optional
+try:
+    import logfire
+    LOGFIRE_AVAILABLE = True
+except ImportError:
+    LOGFIRE_AVAILABLE = False
+    logfire = None
 
 from .models import (
     JobResponse,
@@ -26,8 +37,15 @@ from .jobs import (
 )
 
 
-# Initialize Logfire
-logfire.configure()
+# Initialize Logfire if available and configured
+if LOGFIRE_AVAILABLE:
+    try:
+        logfire.configure()
+        print("[OK] Logfire configured successfully")
+    except Exception as e:
+        print(f"[WARN] Logfire not configured: {e}")
+        print("       API will run without Logfire instrumentation")
+        LOGFIRE_AVAILABLE = False
 
 # Create FastAPI app
 app = FastAPI(
@@ -36,8 +54,14 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Instrument FastAPI with Logfire
-logfire.instrument_fastapi(app)
+# Instrument FastAPI with Logfire if available
+if LOGFIRE_AVAILABLE:
+    try:
+        logfire.instrument_fastapi(app)
+        print("[OK] Logfire FastAPI instrumentation enabled")
+    except Exception as e:
+        print(f"[WARN] Logfire FastAPI instrumentation failed: {e}")
+        print("       API will run without FastAPI instrumentation")
 
 # CORS middleware (for Streamlit UI)
 app.add_middleware(
@@ -53,7 +77,9 @@ app.add_middleware(
 async def startup_event():
     """Initialize database on startup."""
     init_db()
-    logfire.info("API started", message="AutoML Agent API is ready")
+    if LOGFIRE_AVAILABLE:
+        logfire.info("API started", message="AutoML Agent API is ready")
+    print("[OK] AutoML Agent API is ready")
 
 
 @app.get("/")
@@ -77,36 +103,37 @@ async def create_job(
 
     Upload a dataset and specify the target column to start training.
     """
-    with logfire.span('create_job', target=target_column, filename=dataset.filename):
-        # Validate file type
-        if not dataset.filename.endswith('.csv'):
-            raise HTTPException(status_code=400, detail="Only CSV files are supported")
+    # Validate file type
+    if not dataset.filename.endswith('.csv'):
+        raise HTTPException(status_code=400, detail="Only CSV files are supported")
 
-        # Generate job ID
-        job_id = generate_job_id()
-        logfire.info('job_created', job_id=job_id, filename=dataset.filename)
+    # Generate job ID
+    job_id = generate_job_id()
+    if LOGFIRE_AVAILABLE:
+        with logfire.span('create_job', target=target_column, filename=dataset.filename):
+            logfire.info('job_created', job_id=job_id, filename=dataset.filename)
 
-        # Save uploaded file
-        file_content = await dataset.read()
-        dataset_path = await save_uploaded_file(file_content, job_id, dataset.filename)
+    # Save uploaded file
+    file_content = await dataset.read()
+    dataset_path = await save_uploaded_file(file_content, job_id, dataset.filename)
 
-        # Start job in background
-        await start_automl_job(
-            job_id=job_id,
-            dataset_path=dataset_path,
-            target_column=target_column,
-            config_path=config_path,
-        )
+    # Start job in background
+    await start_automl_job(
+        job_id=job_id,
+        dataset_path=dataset_path,
+        target_column=target_column,
+        config_path=config_path,
+    )
 
-        # Get job info
-        job = get_job(job_id)
+    # Get job info
+    job = get_job(job_id)
 
-        return JobResponse(
-            job_id=job["job_id"],
-            status=JobStatus(job["status"]),
-            created_at=datetime.fromisoformat(job["created_at"]),
-            target_column=job["target_column"],
-        )
+    return JobResponse(
+        job_id=job["job_id"],
+        status=JobStatus(job["status"]),
+        created_at=datetime.fromisoformat(job["created_at"]),
+        target_column=job["target_column"],
+    )
 
 
 @app.get("/api/v1/jobs/{job_id}/status", response_model=JobStatusResponse)

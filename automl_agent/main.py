@@ -10,6 +10,10 @@ from datetime import datetime
 import joblib
 from typing import Dict, Any
 
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
 from .orchestrator.state import AutoMLState
 from .orchestrator.planner import PlannerAgent
 from .agents.data_agent import DataAgent
@@ -109,13 +113,33 @@ def run_automl(
     # Split features and target
     X, y = get_feature_target_split(data, target_column)
 
+    # Infer task type
+    from automl_agent.tools.data_utils import infer_task_type
+    task_type = infer_task_type(y)
+    logger.info(f"Inferred task type: {task_type}")
+
+    # Update config with inferred task type
+    config["metrics"]["task_type"] = task_type
+
+    # Update metrics based on task type
+    if task_type == "regression":
+        config["metrics"]["primary"] = "r2"
+        config["metrics"]["secondary"] = ["rmse", "mae"]
+        logger.info("Using regression metrics: primary=r2, secondary=[rmse, mae]")
+    else:
+        # Keep default classification metrics
+        logger.info(f"Using classification metrics: primary={config['metrics']['primary']}")
+
+    # Only stratify for classification tasks
+    should_stratify = task_type == "classification"
+
     # Split data
     X_train, X_val, X_test, y_train, y_val, y_test = split_data(
         X, y,
         test_size=config["data"]["test_size"],
         validation_size=config["data"]["validation_size"],
         random_state=config["data"]["random_state"],
-        stratify=config["data"]["stratify"],
+        stratify=should_stratify,
     )
 
     logger.info(f"Data split: train={len(X_train)}, val={len(X_val) if X_val is not None else 0}, test={len(X_test)}")

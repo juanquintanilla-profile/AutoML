@@ -1,0 +1,231 @@
+{
+  "run_date": "2025-12-29T20:07:00.107121",
+  "config": {
+    "budget": {
+      "max_iterations": 10,
+      "max_time_seconds": 3600,
+      "max_trials_per_model": 50,
+      "early_stopping_rounds": 3
+    },
+    "llm": {
+      "provider": "azure",
+      "deployment_name": "gpt-4o-mini",
+      "api_version": "2025-01-01-preview",
+      "temperature": 0.7,
+      "max_tokens": 2000
+    },
+    "metrics": {
+      "primary": "r2",
+      "secondary": [
+        "rmse",
+        "mae"
+      ],
+      "task_type": "regression"
+    },
+    "model_families": [
+      "lightgbm",
+      "xgboost",
+      "catboost",
+      "random_forest",
+      "logistic_regression"
+    ],
+    "hpo": {
+      "engine": "flaml",
+      "n_trials": 50,
+      "time_budget": 300
+    },
+    "data": {
+      "test_size": 0.2,
+      "validation_size": 0.2,
+      "random_state": 42,
+      "stratify": true
+    },
+    "preprocessing": {
+      "auto_detect": true,
+      "handle_missing": true,
+      "handle_categorical": true,
+      "scale_features": true,
+      "remove_outliers": false
+    },
+    "logging": {
+      "use_mlflow": true,
+      "mlflow_tracking_uri": "./mlruns",
+      "experiment_name": "automl_experiment",
+      "log_level": "INFO"
+    },
+    "output": {
+      "save_model": true,
+      "save_metrics": true,
+      "save_summary": true,
+      "generate_report": false
+    }
+  },
+  "state": {
+    "status": "completed",
+    "iteration": 9,
+    "best_score": 0.6537631803513222,
+    "best_model": "lightgbm",
+    "total_time": 1244.584075,
+    "total_trials": 4,
+    "iterations_without_improvement": 0
+  },
+  "history": [
+    {
+      "iteration": 1,
+      "action": "run_data_agent",
+      "result": {
+        "dataset_summary": {
+          "n_rows": 545,
+          "n_features": 12,
+          "target_column": "price",
+          "feature_types": {
+            "area": "int64",
+            "bedrooms": "int64",
+            "bathrooms": "int64",
+            "stories": "int64",
+            "mainroad": "object",
+            "guestroom": "object",
+            "basement": "object",
+            "hotwaterheating": "object",
+            "airconditioning": "object",
+            "parking": "int64",
+            "prefarea": "object",
+            "furnishingstatus": "object"
+          },
+          "missing_values": {
+            "area": 0,
+            "bedrooms": 0,
+            "bathrooms": 0,
+            "stories": 0,
+            "mainroad": 0,
+            "guestroom": 0,
+            "basement": 0,
+            "hotwaterheating": 0,
+            "airconditioning": 0,
+            "parking": 0,
+            "prefarea": 0,
+            "furnishingstatus": 0
+          },
+          "target_distribution": {
+            "mean": 4766729.247706422,
+            "std": 1870439.6156573922,
+            "min": 1750000.0,
+            "max": 13300000.0
+          },
+          "correlations": {},
+          "outliers": {},
+          "task_type": "regression"
+        },
+        "preprocessing_plan": {
+          "handle_missing": [],
+          "encode_categorical": [
+            {
+              "column": "mainroad",
+              "strategy": "onehot"
+            },
+            {
+              "column": "guestroom",
+              "strategy": "onehot"
+            },
+            {
+              "column": "basement",
+              "strategy": "onehot"
+            },
+            {
+              "column": "hotwaterheating",
+              "strategy": "onehot"
+            },
+            {
+              "column": "airconditioning",
+              "strategy": "onehot"
+            },
+            {
+              "column": "prefarea",
+              "strategy": "onehot"
+            },
+            {
+              "column": "furnishingstatus",
+              "strategy": "onehot"
+            }
+          ],
+          "scale_features": [
+            {
+              "column": "area",
+              "strategy": "standard"
+            },
+            {
+              "column": "bedrooms",
+              "strategy": "standard"
+            },
+            {
+              "column": "bathrooms",
+              "strategy": "standard"
+            },
+            {
+              "column": "stories",
+              "strategy": "standard"
+            },
+            {
+              "column": "parking",
+              "strategy": "standard"
+            }
+          ],
+          "feature_engineering": []
+        }
+      },
+      "timestamp": "2025-12-29T19:46:17.122247"
+    },
+    {
+      "iteration": 2,
+      "action": "run_modeling_agent",
+      "result": {
+        "n_candidates": 4
+      },
+      "timestamp": "2025-12-29T19:46:17.912833"
+    },
+    {
+      "iteration": 3,
+      "action": "run_hpo_agent",
+      "result": {
+        "n_optimized": 4
+      },
+      "timestamp": "2025-12-29T20:06:19.381808"
+    },
+    {
+      "iteration": 4,
+      "action": "run_eval_agent",
+      "result": {
+        "rankings": [
+          {
+            "rank": 1,
+            "model_name": "lightgbm",
+            "test_score": 0.6537631803513222,
+            "overfit_score": 0.23393776821526324
+          },
+          {
+            "rank": 2,
+            "model_name": "xgboost",
+            "test_score": 0.6537631803513222,
+            "overfit_score": 0.23393776821526324
+          },
+          {
+            "rank": 3,
+            "model_name": "catboost",
+            "test_score": 0.6537631803513222,
+            "overfit_score": 0.23393776821526324
+          },
+          {
+            "rank": 4,
+            "model_name": "random_forest",
+            "test_score": 0.6537631803513222,
+            "overfit_score": 0.23393776821526324
+          }
+        ],
+        "best_model": "lightgbm",
+        "best_score": 0.6537631803513222,
+        "primary_metric": "r2"
+      },
+      "timestamp": "2025-12-29T20:06:48.745932"
+    }
+  ]
+}

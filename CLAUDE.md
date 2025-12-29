@@ -8,7 +8,9 @@ AutoML Agent is a multi-agent system that uses LLM-based orchestration to automa
 
 ## Running the Application
 
-### Basic Usage
+### Three Ways to Use AutoML Agent
+
+#### 1. Command Line (Direct)
 
 ```bash
 # Run with example data
@@ -22,23 +24,63 @@ python -m automl_agent \
   --output automl_agent/output
 ```
 
+#### 2. REST API (FastAPI)
+
+```bash
+# Start API server
+python -m uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+
+# Or with just Python
+python api/main.py
+```
+
+**API Endpoints:**
+- `POST /api/v1/jobs` - Create new AutoML job (upload CSV)
+- `GET /api/v1/jobs/{job_id}/status` - Check job status and progress
+- `GET /api/v1/jobs/{job_id}/results` - Get evaluation metrics
+- `GET /api/v1/jobs/{job_id}/logs` - View execution logs
+- `GET /api/v1/jobs/{job_id}/download-model` - Download trained model
+- `GET /api/v1/jobs` - List all jobs (paginated)
+
+**Features:**
+- Async job execution with background workers
+- SQLite database for job persistence (stored at `outputs/jobs.db`)
+- Logfire integration for observability (OPTIONAL - API works without it, just skip token setup)
+- CORS enabled for web UI access
+
+#### 3. Web UI (Streamlit)
+
+```bash
+# Start Streamlit UI (requires API server running)
+streamlit run ui/app.py
+```
+
+**UI Pages:**
+- New Job: Upload datasets, select target, start training
+- Job Monitor: Track running jobs with auto-refresh
+- Results: View metrics, download models
+
 ### Testing
 
 ```bash
 # Generate example dataset
 python generate_example_data.py
 
-# Run test script (interactive)
+# Run test script (interactive) - Unix/Git Bash
 ./test_automl.sh
+
+# Or run directly (works on Windows)
+python -m automl_agent --data data/customer_churn.csv --target churn
 ```
 
 ### Environment Setup
 
-1. Install dependencies: `pip install -r requirements.txt`
-2. Set up `.env` file with API credentials:
+1. Install core dependencies: `pip install -r requirements.txt`
+2. Install API/UI dependencies: `pip install -r requirements-api.txt`
+3. Set up `.env` file with API credentials:
    - For OpenAI: `OPENAI_API_KEY`
    - For Azure OpenAI: `AZURE_OPENAI_ENDPOINT` and `AZURE_OPENAI_API_KEY`
-3. Configure `automl_agent/config.yaml` for LLM provider (OpenAI or Azure)
+4. Configure `automl_agent/config.yaml` for LLM provider (OpenAI or Azure)
 
 ## Architecture
 
@@ -56,12 +98,22 @@ The system follows a strict sequential workflow orchestrated by a PlannerAgent (
 
 ### Key Components
 
+**Core AutoML Engine:**
 - **`automl_agent/main.py`**: Entry point and orchestration loop
 - **`automl_agent/orchestrator/planner.py`**: LLM-based decision maker that chooses next action
 - **`automl_agent/orchestrator/state.py`**: Global state management using `AutoMLState` dataclass
 - **`automl_agent/agents/`**: Specialized agents for data, modeling, HPO, and evaluation
 - **`automl_agent/tools/`**: Utilities for data processing, preprocessing, metrics, logging
 - **`automl_agent/prompts/planner.txt`**: System prompt for the LLM orchestrator
+
+**REST API:**
+- **`api/main.py`**: FastAPI application with all endpoints
+- **`api/models.py`**: Pydantic schemas for request/response validation
+- **`api/database.py`**: SQLite database for job persistence
+- **`api/jobs.py`**: Background job execution and file management
+
+**Web UI:**
+- **`ui/app.py`**: Streamlit application with three pages (New Job, Monitor, Results)
 
 ### State Management
 
@@ -119,11 +171,13 @@ Edit `automl_agent/config.yaml` to customize:
 
 ## Output Artifacts
 
-After completion, check `automl_agent/output/`:
+**CLI runs** save to `automl_agent/output/`:
 - `model.joblib` - Best trained model pipeline
 - `metrics.json` - Evaluation results
 - `run_summary.json` - Complete execution trace with config, state, and history
 - `config.json` - Configuration used for the run
+
+**API jobs** save to `outputs/{job_id}/` with the same file structure
 
 ## Extending the System
 

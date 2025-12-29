@@ -4,7 +4,9 @@
       "Bash(source:*)",
       "Bash(python -m automl_agent.main:*)",
       "Bash(python -m automl_agent:*)",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(venv/Scripts/python:*)",
+      "Bash(curl:*)"
     ]
   }
 }

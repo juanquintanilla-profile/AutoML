@@ -4,13 +4,24 @@ Job execution and management.
 
 import uuid
 import shutil
+import os
 from pathlib import Path
 from datetime import datetime
 from typing import Optional
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
-import logfire
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv()
+
+# Try to import logfire, but make it optional
+try:
+    import logfire
+    LOGFIRE_AVAILABLE = True
+except ImportError:
+    LOGFIRE_AVAILABLE = False
+    logfire = None
 
 from automl_agent.main import run_automl
 from .database import (
@@ -62,45 +73,41 @@ def execute_automl_job(
     This function wraps the existing automl_agent/main.py::run_automl()
     without modifying it.
     """
-    with logfire.span(
-        'automl_job',
-        job_id=job_id,
-        target=target_column,
-        dataset=dataset_path
-    ):
-        try:
-            # Update status to running
-            update_job_status(
-                job_id,
-                JobStatus.RUNNING,
-                started_at=datetime.now().isoformat()
-            )
+    try:
+        # Update status to running
+        update_job_status(
+            job_id,
+            JobStatus.RUNNING,
+            started_at=datetime.now().isoformat()
+        )
 
+        if LOGFIRE_AVAILABLE:
             logfire.info('job_started', job_id=job_id)
 
-            # Run AutoML (this is the existing function, unchanged)
-            state = run_automl(
-                data_path=dataset_path,
-                target_column=target_column,
-                config_path=config_path,
-                output_dir=output_dir,
-            )
+        # Run AutoML (this is the existing function, unchanged)
+        state = run_automl(
+            data_path=dataset_path,
+            target_column=target_column,
+            config_path=config_path,
+            output_dir=output_dir,
+        )
 
-            # Update final status
-            update_job_status(
-                job_id,
-                JobStatus.COMPLETED,
-                completed_at=datetime.now().isoformat()
-            )
+        # Update final status
+        update_job_status(
+            job_id,
+            JobStatus.COMPLETED,
+            completed_at=datetime.now().isoformat()
+        )
 
-            # Update final results
-            update_job_progress(
-                job_id,
-                current_iteration=state.iteration,
-                best_model=state.best_model.get('model_name') if state.best_model else None,
-                best_score=state.best_score,
-            )
+        # Update final results
+        update_job_progress(
+            job_id,
+            current_iteration=state.iteration,
+            best_model=state.best_model.get('model_name') if state.best_model else None,
+            best_score=state.best_score,
+        )
 
+        if LOGFIRE_AVAILABLE:
             logfire.info(
                 'job_completed',
                 job_id=job_id,
@@ -110,17 +117,20 @@ def execute_automl_job(
                 duration=state.total_time
             )
 
-        except Exception as e:
-            # Update status to failed
-            update_job_status(
-                job_id,
-                JobStatus.FAILED,
-                error=str(e),
-                completed_at=datetime.now().isoformat()
-            )
+    except Exception as e:
+        # Update status to failed
+        update_job_status(
+            job_id,
+            JobStatus.FAILED,
+            error=str(e),
+            completed_at=datetime.now().isoformat()
+        )
 
+        if LOGFIRE_AVAILABLE:
             logfire.error('job_failed', job_id=job_id, error=str(e), exc_info=True)
-            raise
+
+        print(f"[ERROR] Job {job_id} failed: {str(e)}")
+        raise
 
 
 async def start_automl_job(
