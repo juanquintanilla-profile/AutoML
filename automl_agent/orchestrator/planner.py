@@ -9,6 +9,14 @@ import os
 from openai import OpenAI, AzureOpenAI
 from pathlib import Path
 
+# Try to import logfire for LLM instrumentation
+try:
+    import logfire
+    LOGFIRE_AVAILABLE = True
+except ImportError:
+    LOGFIRE_AVAILABLE = False
+    logfire = None
+
 
 class PlannerAgent:
     """Agent that uses LLM to plan and orchestrate the AutoML workflow."""
@@ -22,6 +30,14 @@ class PlannerAgent:
         """
         self.config = config
         self.llm_config = config.get("llm", {})
+
+        # Configure Logfire if available (needed for instrumentation)
+        if LOGFIRE_AVAILABLE:
+            try:
+                logfire.configure()
+            except Exception as e:
+                # May already be configured, that's OK
+                pass
 
         # Initialize OpenAI client (supports both OpenAI and Azure OpenAI)
         provider = self.llm_config.get("provider", "openai")
@@ -50,6 +66,14 @@ class PlannerAgent:
 
             self.client = OpenAI(api_key=api_key)
             self.model = self.llm_config.get("model", "gpt-4-turbo-preview")
+
+        # Instrument OpenAI client with Logfire for observability
+        if LOGFIRE_AVAILABLE:
+            try:
+                logfire.instrument_openai(self.client)
+                print("[OK] Logfire instrumentation enabled for OpenAI client")
+            except Exception as e:
+                print(f"[WARN] Failed to instrument OpenAI client with Logfire: {e}")
 
         self.temperature = self.llm_config.get("temperature", 0.7)
         self.max_tokens = self.llm_config.get("max_tokens", 2000)
