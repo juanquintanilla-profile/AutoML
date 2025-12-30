@@ -1,0 +1,102 @@
+{
+  "best_model": "lightgbm",
+  "best_score": 0.7653631284916201,
+  "primary_metric": "accuracy",
+  "all_results": [
+    {
+      "model_name": "lightgbm",
+      "train_metrics": {
+        "accuracy": 0.9063670411985019,
+        "precision": 0.9115168008053482,
+        "recall": 0.9063670411985019,
+        "f1": 0.9042891626570826,
+        "roc_auc": 0.9692416042701459
+      },
+      "test_metrics": {
+        "accuracy": 0.7653631284916201,
+        "precision": 0.7623173310608212,
+        "recall": 0.7653631284916201,
+        "f1": 0.761298427252854,
+        "roc_auc": 0.7891304347826087
+      },
+      "overfit_score": 0.14100391270688173,
+      "is_overfitting": true
+    },
+    {
+      "model_name": "xgboost",
+      "train_metrics": {
+        "accuracy": 0.9063670411985019,
+        "precision": 0.9115168008053482,
+        "recall": 0.9063670411985019,
+        "f1": 0.9042891626570826,
+        "roc_auc": 0.9692416042701459
+      },
+      "test_metrics": {
+        "accuracy": 0.7653631284916201,
+        "precision": 0.7623173310608212,
+        "recall": 0.7653631284916201,
+        "f1": 0.761298427252854,
+        "roc_auc": 0.7891304347826087
+      },
+      "overfit_score": 0.14100391270688173,
+      "is_overfitting": true
+    },
+    {
+      "model_name": "catboost",
+      "train_metrics": {
+        "accuracy": 0.9063670411985019,
+        "precision": 0.9115168008053482,
+        "recall": 0.9063670411985019,
+        "f1": 0.9042891626570826,
+        "roc_auc": 0.9692416042701459
+      },
+      "test_metrics": {
+        "accuracy": 0.7653631284916201,
+        "precision": 0.7623173310608212,
+        "recall": 0.7653631284916201,
+        "f1": 0.761298427252854,
+        "roc_auc": 0.7891304347826087
+      },
+      "overfit_score": 0.14100391270688173,
+      "is_overfitting": true
+    },
+    {
+      "model_name": "random_forest",
+      "train_metrics": {
+        "accuracy": 0.9063670411985019,
+        "precision": 0.9115168008053482,
+        "recall": 0.9063670411985019,
+        "f1": 0.9042891626570826,
+        "roc_auc": 0.9692416042701459
+      },
+      "test_metrics": {
+        "accuracy": 0.7653631284916201,
+        "precision": 0.7623173310608212,
+        "recall": 0.7653631284916201,
+        "f1": 0.761298427252854,
+        "roc_auc": 0.7891304347826087
+      },
+      "overfit_score": 0.14100391270688173,
+      "is_overfitting": true
+    },
+    {
+      "model_name": "logistic_regression",
+      "train_metrics": {
+        "accuracy": 0.9063670411985019,
+        "precision": 0.9115168008053482,
+        "recall": 0.9063670411985019,
+        "f1": 0.9042891626570826,
+        "roc_auc": 0.9692416042701459
+      },
+      "test_metrics": {
+        "accuracy": 0.7653631284916201,
+        "precision": 0.7623173310608212,
+        "recall": 0.7653631284916201,
+        "f1": 0.761298427252854,
+        "roc_auc": 0.7891304347826087
+      },
+      "overfit_score": 0.14100391270688173,
+      "is_overfitting": true
+    }
+  ]
+}

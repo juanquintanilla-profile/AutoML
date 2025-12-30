@@ -87,47 +87,49 @@ def validate_data(data: pd.DataFrame, target_column: str) -> Dict[str, Any]:
     Returns:
         Validation report dictionary
     """
-    issues = []
+    errors = []  # Critical errors that prevent execution
+    warnings = []  # Non-critical issues that can be auto-fixed
 
-    # Check if target column exists
+    # Check if target column exists (CRITICAL)
     if target_column not in data.columns:
-        issues.append(f"Target column '{target_column}' not found in dataset")
+        errors.append(f"Target column '{target_column}' not found in dataset")
 
-    # Check for empty dataset
+    # Check for empty dataset (CRITICAL)
     if len(data) == 0:
-        issues.append("Dataset is empty")
+        errors.append("Dataset is empty")
 
-    # Check for too few samples
+    # Check for too few samples (CRITICAL)
     if len(data) < 10:
-        issues.append(f"Dataset has only {len(data)} samples, which is too few")
+        errors.append(f"Dataset has only {len(data)} samples, which is too few")
 
-    # Check for missing target values
+    # Check for missing target values (WARNING - can be auto-fixed)
     if target_column in data.columns:
         missing_target = data[target_column].isnull().sum()
         if missing_target > 0:
-            issues.append(f"Target column has {missing_target} missing values")
+            warnings.append(f"Target column has {missing_target} missing values (will be auto-removed)")
 
-    # Check for constant features
+    # Check for constant features (WARNING - can be auto-removed)
     constant_features = []
     for col in data.columns:
         if col != target_column and data[col].nunique() == 1:
             constant_features.append(col)
 
     if constant_features:
-        issues.append(f"Constant features detected: {constant_features}")
+        warnings.append(f"Constant features detected (will be auto-removed): {constant_features}")
 
-    # Check for high cardinality categorical features
+    # Check for high cardinality categorical features (WARNING - can be handled)
     high_cardinality = []
     for col in data.select_dtypes(include=['object', 'category']).columns:
         if col != target_column and data[col].nunique() > 100:
             high_cardinality.append(col)
 
     if high_cardinality:
-        issues.append(f"High cardinality features (>100 unique values): {high_cardinality}")
+        warnings.append(f"High cardinality features detected (will be auto-handled): {high_cardinality}")
 
     return {
-        "is_valid": len(issues) == 0,
-        "issues": issues,
+        "is_valid": len(errors) == 0,  # Only critical errors block execution
+        "errors": errors,
+        "warnings": warnings,
         "n_samples": len(data),
         "n_features": len(data.columns) - 1,
     }
@@ -211,6 +213,117 @@ def infer_task_type(y: pd.Series, max_unique_for_classification: int = 20) -> st
     else:
         # Float values, almost certainly regression
         return "regression"
+
+
+def clean_column_names(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Clean column names by stripping whitespace.
+
+    Args:
+        data: Input dataframe
+
+    Returns:
+        Dataframe with cleaned column names
+    """
+    data.columns = data.columns.str.strip()
+    return data
+
+
+def auto_drop_irrelevant_columns(
+    data: pd.DataFrame, target_column: str, verbose: bool = True
+) -> Tuple[pd.DataFrame, list]:
+    """
+    Automatically drop irrelevant columns that don't contribute to ML.
+
+    Drops columns that are:
+    - ID-like (named 'id', 'index', etc. or all unique values)
+    - High cardinality categorical (>100 unique values for string columns)
+    - Mostly missing (>80% null)
+    - Constant (only 1 unique value)
+
+    Args:
+        data: Input dataframe
+        target_column: Name of target column (won't be dropped)
+        verbose: Whether to print info about dropped columns
+
+    Returns:
+        Cleaned dataframe, list of dropped column names
+    """
+    data_clean = data.copy()
+    dropped_cols = []
+
+    for col in data.columns:
+        if col == target_column:
+            continue
+
+        n_unique = data[col].nunique()
+        n_samples = len(data)
+        missing_pct = data[col].isnull().sum() / n_samples
+
+        # Drop ID-like columns (all or almost all unique)
+        if n_unique == n_samples or n_unique == n_samples - 1:
+            if verbose:
+                print(f"[AUTO-DROP] '{col}': ID-like column (all unique values)")
+            dropped_cols.append(col)
+            continue
+
+        # Drop constant columns
+        if n_unique == 1:
+            if verbose:
+                print(f"[AUTO-DROP] '{col}': Constant column (only 1 unique value)")
+            dropped_cols.append(col)
+            continue
+
+        # Drop columns with >70% missing values
+        if missing_pct > 0.7:
+            if verbose:
+                print(f"[AUTO-DROP] '{col}': Too many missing values ({missing_pct*100:.1f}%)")
+            dropped_cols.append(col)
+            continue
+
+        # Drop high cardinality categorical columns (likely useless)
+        if data[col].dtype in ['object', 'category']:
+            if n_unique > 100:
+                # Check if it's truly high cardinality (>50% unique)
+                unique_ratio = n_unique / n_samples
+                if unique_ratio > 0.5:
+                    if verbose:
+                        print(f"[AUTO-DROP] '{col}': High cardinality categorical ({n_unique} unique values)")
+                    dropped_cols.append(col)
+
+    # Drop all identified columns
+    if dropped_cols:
+        data_clean = data_clean.drop(columns=dropped_cols)
+        if verbose:
+            print(f"[OK] Dropped {len(dropped_cols)} irrelevant columns: {dropped_cols}")
+
+    return data_clean, dropped_cols
+
+
+def clean_target_missing_values(
+    data: pd.DataFrame, target_column: str, verbose: bool = True
+) -> pd.DataFrame:
+    """
+    Remove rows where target column has missing values.
+
+    Args:
+        data: Input dataframe
+        target_column: Name of target column
+        verbose: Whether to print info
+
+    Returns:
+        Cleaned dataframe
+    """
+    missing_count = data[target_column].isnull().sum()
+
+    if missing_count > 0:
+        data_clean = data.dropna(subset=[target_column]).copy()
+        if verbose:
+            print(f"[AUTO-CLEAN] Removed {missing_count} rows with missing target values")
+            print(f"[OK] Dataset size: {len(data)} -> {len(data_clean)} rows")
+        return data_clean
+
+    return data.copy()
 
 
 def prepare_target(y: pd.Series, task_type: str) -> np.ndarray:

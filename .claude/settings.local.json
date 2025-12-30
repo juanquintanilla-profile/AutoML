@@ -6,7 +6,9 @@
       "Bash(python -m automl_agent:*)",
       "Bash(pip install:*)",
       "Bash(venv/Scripts/python:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(python:*)",
+      "Bash(timeout 120 python:*)"
     ]
   }
 }

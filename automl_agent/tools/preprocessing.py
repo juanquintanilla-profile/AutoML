@@ -16,6 +16,32 @@ from sklearn.impute import SimpleImputer
 from typing import Dict, Any, List, Tuple
 
 
+class RobustLabelEncoder:
+    """
+    Label encoder that handles unknown categories gracefully.
+    Assigns -1 to unknown categories during transform.
+    """
+
+    def __init__(self):
+        self.classes_ = None
+        self.mapping_ = None
+
+    def fit(self, y):
+        """Fit the encoder to unique values."""
+        unique_vals = pd.Series(y).dropna().unique()
+        self.classes_ = unique_vals
+        self.mapping_ = {val: idx for idx, val in enumerate(unique_vals)}
+        return self
+
+    def transform(self, y):
+        """Transform values, assigning -1 to unknowns."""
+        return pd.Series(y).map(lambda x: self.mapping_.get(x, -1)).values
+
+    def fit_transform(self, y):
+        """Fit and transform in one step."""
+        return self.fit(y).transform(y)
+
+
 class PreprocessingPipeline:
     """Pipeline for data preprocessing."""
 
@@ -65,7 +91,8 @@ class PreprocessingPipeline:
                     encoder.fit(X_copy[[col]])
                     self.encoders[col] = encoder
                 elif strategy == "label":
-                    encoder = LabelEncoder()
+                    # Use RobustLabelEncoder to handle unknown values
+                    encoder = RobustLabelEncoder()
                     encoder.fit(X_copy[col])
                     self.encoders[col] = encoder
 
@@ -120,7 +147,7 @@ class PreprocessingPipeline:
                     )
                     encoded_cols.append(encoded_df)
                     cols_to_drop.append(col)
-                elif isinstance(encoder, LabelEncoder):
+                elif isinstance(encoder, (LabelEncoder, RobustLabelEncoder)):
                     X_copy[col] = encoder.transform(X_copy[col])
 
         # Drop original categorical columns and add encoded ones

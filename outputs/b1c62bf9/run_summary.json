@@ -1,0 +1,218 @@
+{
+  "run_date": "2025-12-30T13:57:42.075340",
+  "config": {
+    "budget": {
+      "max_iterations": 10,
+      "max_time_seconds": 3600,
+      "max_trials_per_model": 50,
+      "early_stopping_rounds": 3
+    },
+    "llm": {
+      "provider": "azure",
+      "deployment_name": "gpt-4o-mini",
+      "api_version": "2025-01-01-preview",
+      "temperature": 0.7,
+      "max_tokens": 2000
+    },
+    "metrics": {
+      "primary": "accuracy",
+      "secondary": [
+        "precision",
+        "recall",
+        "f1"
+      ],
+      "task_type": "classification"
+    },
+    "model_families": [
+      "lightgbm",
+      "xgboost",
+      "catboost",
+      "random_forest",
+      "logistic_regression"
+    ],
+    "hpo": {
+      "engine": "flaml",
+      "n_trials": 50,
+      "time_budget": 300
+    },
+    "data": {
+      "test_size": 0.2,
+      "validation_size": 0.2,
+      "random_state": 42,
+      "stratify": true
+    },
+    "preprocessing": {
+      "auto_detect": true,
+      "handle_missing": true,
+      "handle_categorical": true,
+      "scale_features": true,
+      "remove_outliers": false
+    },
+    "logging": {
+      "use_mlflow": true,
+      "mlflow_tracking_uri": "./mlruns",
+      "experiment_name": "automl_experiment",
+      "log_level": "INFO"
+    },
+    "output": {
+      "save_model": true,
+      "save_metrics": true,
+      "save_summary": true,
+      "generate_report": false
+    }
+  },
+  "state": {
+    "status": "completed",
+    "iteration": 6,
+    "best_score": 0.7653631284916201,
+    "best_model": "lightgbm",
+    "total_time": 1547.947936,
+    "total_trials": 5,
+    "iterations_without_improvement": 0
+  },
+  "history": [
+    {
+      "iteration": 1,
+      "action": "run_data_agent",
+      "result": {
+        "dataset_summary": {
+          "n_rows": 891,
+          "n_features": 7,
+          "target_column": "Survived",
+          "feature_types": {
+            "Pclass": "int64",
+            "Sex": "object",
+            "Age": "float64",
+            "SibSp": "int64",
+            "Parch": "int64",
+            "Fare": "float64",
+            "Embarked": "object"
+          },
+          "missing_values": {
+            "Pclass": 0,
+            "Sex": 0,
+            "Age": 177,
+            "SibSp": 0,
+            "Parch": 0,
+            "Fare": 0,
+            "Embarked": 2
+          },
+          "target_distribution": {
+            "0": 549,
+            "1": 342
+          },
+          "correlations": {},
+          "outliers": {},
+          "task_type": "classification",
+          "n_classes": 2
+        },
+        "preprocessing_plan": {
+          "handle_missing": [
+            {
+              "column": "Age",
+              "strategy": "mean"
+            },
+            {
+              "column": "Embarked",
+              "strategy": "most_frequent"
+            }
+          ],
+          "encode_categorical": [
+            {
+              "column": "Sex",
+              "strategy": "onehot",
+              "cardinality": 2
+            },
+            {
+              "column": "Embarked",
+              "strategy": "onehot",
+              "cardinality": 3
+            }
+          ],
+          "scale_features": [
+            {
+              "column": "Pclass",
+              "strategy": "standard"
+            },
+            {
+              "column": "Age",
+              "strategy": "standard"
+            },
+            {
+              "column": "SibSp",
+              "strategy": "standard"
+            },
+            {
+              "column": "Parch",
+              "strategy": "standard"
+            },
+            {
+              "column": "Fare",
+              "strategy": "standard"
+            }
+          ],
+          "feature_engineering": []
+        }
+      },
+      "timestamp": "2025-12-30T13:31:55.314875"
+    },
+    {
+      "iteration": 2,
+      "action": "run_modeling_agent",
+      "result": {
+        "n_candidates": 5
+      },
+      "timestamp": "2025-12-30T13:31:56.035357"
+    },
+    {
+      "iteration": 3,
+      "action": "run_hpo_agent",
+      "result": {
+        "n_optimized": 5
+      },
+      "timestamp": "2025-12-30T13:56:56.944247"
+    },
+    {
+      "iteration": 4,
+      "action": "run_eval_agent",
+      "result": {
+        "rankings": [
+          {
+            "rank": 1,
+            "model_name": "lightgbm",
+            "test_score": 0.7653631284916201,
+            "overfit_score": 0.14100391270688173
+          },
+          {
+            "rank": 2,
+            "model_name": "xgboost",
+            "test_score": 0.7653631284916201,
+            "overfit_score": 0.14100391270688173
+          },
+          {
+            "rank": 3,
+            "model_name": "catboost",
+            "test_score": 0.7653631284916201,
+            "overfit_score": 0.14100391270688173
+          },
+          {
+            "rank": 4,
+            "model_name": "random_forest",
+            "test_score": 0.7653631284916201,
+            "overfit_score": 0.14100391270688173
+          },
+          {
+            "rank": 5,
+            "model_name": "logistic_regression",
+            "test_score": 0.7653631284916201,
+            "overfit_score": 0.14100391270688173
+          }
+        ],
+        "best_model": "lightgbm",
+        "best_score": 0.7653631284916201,
+        "primary_metric": "accuracy"
+      },
+      "timestamp": "2025-12-30T13:57:38.851680"
+    }
+  ]
+}

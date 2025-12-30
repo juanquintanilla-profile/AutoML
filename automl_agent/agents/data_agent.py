@@ -78,12 +78,13 @@ class DataAgent:
 
         return summary
 
-    def propose_preprocessing(self, dataset_summary: Dict[str, Any]) -> Dict[str, Any]:
+    def propose_preprocessing(self, dataset_summary: Dict[str, Any], data: pd.DataFrame) -> Dict[str, Any]:
         """
         Propose preprocessing steps based on dataset analysis.
 
         Args:
             dataset_summary: Summary from analyze_dataset
+            data: Original dataframe (to check cardinality)
 
         Returns:
             Preprocessing plan dictionary
@@ -103,12 +104,25 @@ class DataAgent:
                     "strategy": "mean" if dataset_summary["feature_types"][col] in ["float64", "int64"] else "most_frequent"
                 })
 
-        # Encode categorical features
+        # Encode categorical features with smart strategy selection
         for col, dtype in dataset_summary["feature_types"].items():
             if dtype in ["object", "category"]:
+                # Get cardinality for this column
+                n_unique = data[col].nunique()
+
+                # Smart encoding strategy based on cardinality:
+                # - Low cardinality (<10): OneHot encoding
+                # - Medium cardinality (10-50): Label encoding (better for tree models)
+                # - High cardinality (>50): Label encoding (avoid dimensionality explosion)
+                if n_unique < 10:
+                    strategy = "onehot"
+                else:
+                    strategy = "label"  # Label encoding for medium/high cardinality
+
                 plan["encode_categorical"].append({
                     "column": col,
-                    "strategy": "onehot"  # or "label" for tree-based models
+                    "strategy": strategy,
+                    "cardinality": n_unique,
                 })
 
         # Scale numerical features
@@ -133,7 +147,7 @@ class DataAgent:
             Complete analysis and preprocessing plan
         """
         summary = self.analyze_dataset(data, target_column)
-        preprocessing_plan = self.propose_preprocessing(summary)
+        preprocessing_plan = self.propose_preprocessing(summary, data)
 
         return {
             "dataset_summary": summary,

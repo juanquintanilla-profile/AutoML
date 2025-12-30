@@ -20,7 +20,10 @@ from .agents.data_agent import DataAgent
 from .agents.modeling_agent import ModelingAgent
 from .agents.hpo_agent import HPOAgent
 from .agents.eval_agent import EvaluationAgent
-from .tools.data_utils import load_data, split_data, validate_data, get_feature_target_split, prepare_target
+from .tools.data_utils import (
+    load_data, split_data, validate_data, get_feature_target_split, prepare_target,
+    clean_column_names, auto_drop_irrelevant_columns, clean_target_missing_values
+)
 from .tools.preprocessing import apply_preprocessing
 from .tools.logging import setup_logger, log_config, log_metrics, log_run_summary
 
@@ -103,12 +106,29 @@ def run_automl(
     logger.info(f"Loading data from {data_path}")
     data = load_data(data_path)
 
+    # Clean column names (strip whitespace)
+    data = clean_column_names(data)
+    logger.info("[OK] Column names cleaned")
+
+    # Validate data
     validation = validate_data(data, target_column)
+
+    # Handle critical errors
     if not validation["is_valid"]:
-        logger.error(f"Data validation failed: {validation['issues']}")
-        raise ValueError(f"Data validation failed: {validation['issues']}")
+        logger.error(f"Data validation failed with critical errors: {validation['errors']}")
+        raise ValueError(f"Data validation failed: {validation['errors']}")
+
+    # Show warnings but continue
+    if validation["warnings"]:
+        logger.warning(f"Data validation warnings: {validation['warnings']}")
 
     logger.info(f"Data validated: {validation['n_samples']} samples, {validation['n_features']} features")
+
+    # Auto-clean: Remove rows with missing target values
+    data = clean_target_missing_values(data, target_column, verbose=True)
+
+    # Auto-clean: Drop irrelevant columns (IDs, high cardinality, etc.)
+    data, dropped_cols = auto_drop_irrelevant_columns(data, target_column, verbose=True)
 
     # Split features and target
     X, y = get_feature_target_split(data, target_column)
