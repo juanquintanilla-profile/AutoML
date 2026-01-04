@@ -39,10 +39,23 @@ class PlannerAgent:
                 # May already be configured, that's OK
                 pass
 
-        # Initialize OpenAI client (supports both OpenAI and Azure OpenAI)
-        provider = self.llm_config.get("provider", "openai")
+        # Initialize LLM client based on provider
+        # Supports: ollama (local/free), openai, azure
+        provider = self.llm_config.get("provider", "ollama")
 
-        if provider == "azure":
+        if provider == "ollama":
+            # Ollama configuration (local LLM, free)
+            # Ollama exposes an OpenAI-compatible API at /v1/
+            ollama_host = os.getenv("OLLAMA_HOST", self.llm_config.get("ollama_host", "http://localhost:11434"))
+            self.model = self.llm_config.get("ollama_model", "llama3.2")
+
+            self.client = OpenAI(
+                base_url=f"{ollama_host}/v1",
+                api_key="ollama",  # Ollama doesn't require a real API key
+            )
+            print(f"[OK] Using Ollama at {ollama_host} with model {self.model}")
+
+        elif provider == "azure":
             # Azure OpenAI configuration
             azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
             api_key = os.getenv("AZURE_OPENAI_API_KEY")
@@ -58,7 +71,9 @@ class PlannerAgent:
             )
             # For Azure, model is the deployment name
             self.model = self.llm_config.get("deployment_name", self.llm_config.get("model", "gpt-4"))
-        else:
+            print(f"[OK] Using Azure OpenAI with deployment {self.model}")
+
+        elif provider == "openai":
             # Standard OpenAI configuration
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key:
@@ -66,9 +81,13 @@ class PlannerAgent:
 
             self.client = OpenAI(api_key=api_key)
             self.model = self.llm_config.get("model", "gpt-4-turbo-preview")
+            print(f"[OK] Using OpenAI with model {self.model}")
 
-        # Instrument OpenAI client with Logfire for observability
-        if LOGFIRE_AVAILABLE:
+        else:
+            raise ValueError(f"Unknown LLM provider: {provider}. Use 'ollama', 'openai', or 'azure'")
+
+        # Instrument OpenAI client with Logfire for observability (skip for Ollama)
+        if LOGFIRE_AVAILABLE and provider != "ollama":
             try:
                 logfire.instrument_openai(self.client)
                 print("[OK] Logfire instrumentation enabled for OpenAI client")

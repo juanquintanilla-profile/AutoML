@@ -1,0 +1,81 @@
+# AutoML Agent - Docker Compose
+# Runs the complete AutoML system with a local LLM (Ollama)
+#
+# Usage:
+#   docker-compose up              # Start all services
+#   docker-compose up -d           # Start in background
+#   docker-compose logs -f         # View logs
+#   docker-compose down            # Stop all services
+#
+# First run will download the LLM model (~4GB), subsequent runs are instant.
+
+services:
+  # Ollama - Local LLM server
+  ollama:
+    image: ollama/ollama:latest
+    container_name: automl-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # Ollama model setup - Downloads the model on first run
+  ollama-setup:
+    image: ollama/ollama:latest
+    container_name: automl-ollama-setup
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Checking if model exists..."
+        if ! ollama list | grep -q "llama3.2"; then
+          echo "Downloading llama3.2 model (this may take a few minutes)..."
+          ollama pull llama3.2
+          echo "Model downloaded successfully!"
+        else
+          echo "Model already exists."
+        fi
+    restart: "no"
+
+  # AutoML Agent - Main application
+  automl:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: automl-app
+    depends_on:
+      ollama:
+        condition: service_healthy
+      ollama-setup:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"   # FastAPI
+      - "8501:8501"   # Streamlit UI
+    volumes:
+      - ./outputs:/app/outputs
+      - ./data:/app/data:ro
+    environment:
+      - LLM_PROVIDER=ollama
+      - OLLAMA_HOST=http://ollama:11434
+      # Optional: Override with your own API keys
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
+      # - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+    name: automl-ollama-models

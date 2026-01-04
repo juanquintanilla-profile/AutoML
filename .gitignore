@@ -48,8 +48,7 @@ automl_agent/output/*.md
 flaml.log
 
 # Data files
-data/
-*.csv
+
 *.parquet
 *.xlsx
 

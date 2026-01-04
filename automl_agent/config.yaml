@@ -8,10 +8,19 @@ budget:
   early_stopping_rounds: 3  # Stop if no improvement
 
 # LLM Configuration
-# Supports both OpenAI and Azure OpenAI
+# Supports: "ollama" (local, free), "openai", or "azure"
 llm:
-  # Provider: "openai" or "azure"
-  provider: "azure"
+  # Provider: "ollama", "openai", or "azure"
+  # - ollama: Free, local LLM (recommended for Docker/self-hosted)
+  # - openai: OpenAI API (requires OPENAI_API_KEY)
+  # - azure: Azure OpenAI (requires AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY)
+  provider: "ollama"
+
+  # For Ollama (local): model name and host
+  # Models: llama3.2, mistral, codellama, etc.
+  # Run: ollama pull llama3.2
+  ollama_model: "llama3.2"
+  ollama_host: "http://localhost:11434"  # Default Ollama port (use http://ollama:11434 in Docker)
 
   # For OpenAI: model name (e.g., "gpt-4-turbo-preview", "gpt-4", "gpt-3.5-turbo")
   # model: "gpt-4-turbo-preview"

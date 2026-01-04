@@ -189,6 +189,7 @@ def get_job_results(job_id: str) -> Optional[dict]:
         "status": job["status"],
         "best_model": job.get("best_model"),
         "best_score": job.get("best_score"),
+        "best_params": None,
     }
 
     # Try to read metrics file
@@ -207,8 +208,37 @@ def get_job_results(job_id: str) -> Optional[dict]:
         with open(summary_file) as f:
             summary_data = json.load(f)
             if "state" in summary_data:
-                results["total_iterations"] = summary_data["state"].get("iteration")
-                results["total_time"] = summary_data["state"].get("total_time")
+                state = summary_data["state"]
+                results["total_iterations"] = state.get("iteration")
+                results["total_time"] = state.get("total_time")
+
+            # Extract best_params from optimized_models or best_model
+            best_model_name = results.get("best_model")
+            if best_model_name:
+                # Check in optimized_models list
+                optimized_models = summary_data.get("optimized_models", [])
+                for model in optimized_models:
+                    if model.get("model_name") == best_model_name:
+                        results["best_params"] = model.get("best_params", {})
+                        break
+
+                # Also check in best_model dict if present
+                if not results["best_params"]:
+                    best_model_data = summary_data.get("best_model", {})
+                    if isinstance(best_model_data, dict):
+                        results["best_params"] = best_model_data.get("best_params", {})
+
+            # Get config info for context
+            config = summary_data.get("config", {})
+            if config and not results["best_params"]:
+                # If FLAML was used, include HPO config as context
+                hpo_config = config.get("hpo", {})
+                if hpo_config.get("engine") == "flaml":
+                    results["best_params"] = {
+                        "optimization_method": "FLAML AutoML",
+                        "time_budget": hpo_config.get("time_budget"),
+                        "metric": config.get("metrics", {}).get("primary"),
+                    }
 
     return results
 

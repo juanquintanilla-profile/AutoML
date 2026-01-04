@@ -1,0 +1,47 @@
+==========================================
+  AutoML Agent - Quick Start Guide
+==========================================
+
+OPTION A: Docker (Recommended)
+------------------------------
+docker-compose up
+
+First run downloads the LLM model (~4GB), then:
+- UI:   http://localhost:8501
+- API:  http://localhost:8000/docs
+
+
+OPTION B: Local (requires Ollama)
+---------------------------------
+1. Install Ollama:
+   - Windows: https://ollama.ai/download
+   - Linux/Mac: curl -fsSL https://ollama.ai/install.sh | sh
+
+2. Download model:
+   ollama pull llama3.2
+
+3. Install dependencies:
+   pip install -r requirements.txt
+   pip install -r requirements-api.txt
+
+4. Run API (terminal 1):
+   python -m uvicorn api.main:app --reload --port 8000
+
+5. Run UI (terminal 2):
+   streamlit run ui/app.py
+
+Open http://localhost:8501
+
+
+OPTION C: With your own API keys
+---------------------------------
+1. Create .env file:
+   OPENAI_API_KEY=sk-...
+   # or
+   AZURE_OPENAI_ENDPOINT=https://...
+   AZURE_OPENAI_API_KEY=...
+
+2. Edit automl_agent/config.yaml:
+   provider: "openai"  # or "azure"
+
+3. Follow steps 3-5 from Option B
