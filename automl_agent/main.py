@@ -65,10 +65,31 @@ def save_final_artifacts(state: AutoMLState, config: Dict[str, Any], output_dir:
 
     # Save run summary
     if config["output"]["save_summary"]:
+        # Prepare optimized_models for JSON serialization (remove non-serializable objects)
+        optimized_models_clean = []
+        for model in state.optimized_models:
+            optimized_models_clean.append({
+                "model_name": model.get("model_name"),
+                "best_params": model.get("best_params", {}),
+                "optimization_score": model.get("optimization_score"),
+                "optimization_method": model.get("optimization_method"),
+            })
+
+        # Prepare best_model for JSON serialization
+        best_model_clean = None
+        if state.best_model:
+            best_model_clean = {
+                "model_name": state.best_model.get("model_name"),
+                "best_params": state.best_model.get("best_params", {}),
+                "optimization_score": state.best_model.get("optimization_score"),
+            }
+
         summary = {
             "run_date": datetime.now().isoformat(),
             "config": config,
             "state": state.get_summary(),
+            "optimized_models": optimized_models_clean,
+            "best_model": best_model_clean,
             "history": state.history,
         }
         log_run_summary(summary, output_dir)

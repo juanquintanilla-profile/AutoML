@@ -1,0 +1,260 @@
+{
+  "run_date": "2026-01-06T20:53:42.002480",
+  "config": {
+    "budget": {
+      "max_iterations": 10,
+      "max_time_seconds": 3600,
+      "max_trials_per_model": 50,
+      "early_stopping_rounds": 3
+    },
+    "llm": {
+      "provider": "ollama",
+      "ollama_model": "llama3.2",
+      "ollama_host": "http://ollama:11434",
+      "deployment_name": "gpt-4o-mini",
+      "api_version": "2025-01-01-preview",
+      "temperature": 0.7,
+      "max_tokens": 2000
+    },
+    "metrics": {
+      "primary": "accuracy",
+      "secondary": [
+        "precision",
+        "recall",
+        "f1"
+      ],
+      "task_type": "classification"
+    },
+    "model_families": [
+      "lightgbm",
+      "xgboost",
+      "catboost",
+      "random_forest",
+      "logistic_regression"
+    ],
+    "hpo": {
+      "engine": "flaml",
+      "n_trials": 50,
+      "time_budget": 300
+    },
+    "data": {
+      "test_size": 0.2,
+      "validation_size": 0.2,
+      "random_state": 42,
+      "stratify": true
+    },
+    "preprocessing": {
+      "auto_detect": true,
+      "handle_missing": true,
+      "handle_categorical": true,
+      "scale_features": true,
+      "remove_outliers": false
+    },
+    "logging": {
+      "use_mlflow": true,
+      "mlflow_tracking_uri": "./mlruns",
+      "experiment_name": "automl_experiment",
+      "log_level": "INFO"
+    },
+    "output": {
+      "save_model": true,
+      "save_metrics": true,
+      "save_summary": true,
+      "generate_report": false
+    }
+  },
+  "state": {
+    "status": "completed",
+    "iteration": 3,
+    "best_score": 0.0,
+    "best_model": null,
+    "total_time": 34472.22618,
+    "total_trials": 5,
+    "iterations_without_improvement": 0
+  },
+  "optimized_models": [
+    {
+      "model_name": "lightgbm",
+      "best_params": {
+        "n_estimators": 26,
+        "max_leaves": 41,
+        "min_child_weight": 0.00576401150073861,
+        "learning_rate": 0.0238155881171076,
+        "subsample": 0.986535090970727,
+        "colsample_bylevel": 0.8274735333004625,
+        "colsample_bytree": 0.8985155198665556,
+        "reg_alpha": 0.0009765625,
+        "reg_lambda": 0.05224599662533947
+      },
+      "optimization_score": 0.15545759125374714,
+      "optimization_method": "flaml"
+    },
+    {
+      "model_name": "xgboost",
+      "best_params": {
+        "n_estimators": 18,
+        "max_depth": 5,
+        "min_child_weight": 0.29743112201387434,
+        "learning_rate": 0.1941135933076093,
+        "subsample": 1.0,
+        "colsample_bylevel": 0.6369107034996411,
+        "colsample_bytree": 1.0,
+        "reg_alpha": 0.0009765625,
+        "reg_lambda": 0.9454012580699328
+      },
+      "optimization_score": 0.15736201728090285,
+      "optimization_method": "flaml"
+    },
+    {
+      "model_name": "catboost",
+      "best_params": {
+        "n_estimators": 18,
+        "max_depth": 6,
+        "min_child_weight": 0.1429174121578586,
+        "learning_rate": 0.12718877479497875,
+        "subsample": 0.9588138963835398,
+        "colsample_bylevel": 0.644895962509631,
+        "colsample_bytree": 0.8891910202068497,
+        "reg_alpha": 0.010176126371487147,
+        "reg_lambda": 0.5271738088978453
+      },
+      "optimization_score": 0.15919590901075648,
+      "optimization_method": "flaml"
+    },
+    {
+      "model_name": "random_forest",
+      "best_params": {
+        "n_estimators": 26,
+        "max_leaves": 41,
+        "min_child_weight": 0.00576401150073861,
+        "learning_rate": 0.0238155881171076,
+        "subsample": 0.986535090970727,
+        "colsample_bylevel": 0.8274735333004625,
+        "colsample_bytree": 0.8985155198665556,
+        "reg_alpha": 0.0009765625,
+        "reg_lambda": 0.05224599662533947
+      },
+      "optimization_score": 0.15545759125374714,
+      "optimization_method": "flaml"
+    },
+    {
+      "model_name": "logistic_regression",
+      "best_params": {
+        "n_estimators": 50,
+        "num_leaves": 4,
+        "min_child_samples": 14,
+        "learning_rate": 0.06641463089676881,
+        "log_max_bin": 6,
+        "colsample_bytree": 0.8650285897953071,
+        "reg_alpha": 0.09383471573160347,
+        "reg_lambda": 0.09005695217909267
+      },
+      "optimization_score": 0.17421971433609593,
+      "optimization_method": "flaml"
+    }
+  ],
+  "best_model": null,
+  "history": [
+    {
+      "iteration": 1,
+      "action": "run_data_agent",
+      "result": {
+        "dataset_summary": {
+          "n_rows": 891,
+          "n_features": 7,
+          "target_column": "Survived",
+          "feature_types": {
+            "Pclass": "int64",
+            "Sex": "object",
+            "Age": "float64",
+            "SibSp": "int64",
+            "Parch": "int64",
+            "Fare": "float64",
+            "Embarked": "object"
+          },
+          "missing_values": {
+            "Pclass": 0,
+            "Sex": 0,
+            "Age": 177,
+            "SibSp": 0,
+            "Parch": 0,
+            "Fare": 0,
+            "Embarked": 2
+          },
+          "target_distribution": {
+            "0": 549,
+            "1": 342
+          },
+          "correlations": {},
+          "outliers": {},
+          "task_type": "classification",
+          "n_classes": 2
+        },
+        "preprocessing_plan": {
+          "handle_missing": [
+            {
+              "column": "Age",
+              "strategy": "mean"
+            },
+            {
+              "column": "Embarked",
+              "strategy": "most_frequent"
+            }
+          ],
+          "encode_categorical": [
+            {
+              "column": "Sex",
+              "strategy": "onehot",
+              "cardinality": 2
+            },
+            {
+              "column": "Embarked",
+              "strategy": "onehot",
+              "cardinality": 3
+            }
+          ],
+          "scale_features": [
+            {
+              "column": "Pclass",
+              "strategy": "standard"
+            },
+            {
+              "column": "Age",
+              "strategy": "standard"
+            },
+            {
+              "column": "SibSp",
+              "strategy": "standard"
+            },
+            {
+              "column": "Parch",
+              "strategy": "standard"
+            },
+            {
+              "column": "Fare",
+              "strategy": "standard"
+            }
+          ],
+          "feature_engineering": []
+        }
+      },
+      "timestamp": "2026-01-06T11:19:15.081226"
+    },
+    {
+      "iteration": 2,
+      "action": "run_modeling_agent",
+      "result": {
+        "n_candidates": 5
+      },
+      "timestamp": "2026-01-06T11:19:16.152138"
+    },
+    {
+      "iteration": 3,
+      "action": "run_hpo_agent",
+      "result": {
+        "n_optimized": 5
+      },
+      "timestamp": "2026-01-06T20:53:41.913231"
+    }
+  ]
+}

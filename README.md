@@ -1,154 +1,230 @@
 # AutoML Agent
 
-A multi-agent AutoML system that uses LLM-based orchestration to automate machine learning workflows.
+Sistema multi-agente de AutoML que utiliza orquestación basada en LLM para automatizar flujos de trabajo de machine learning.
 
-## Architecture
+## Cómo Ejecutar la Aplicación
+
+### Requisitos Previos
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado y en ejecución
+
+### Paso 1: Generar y Ejecutar los Contenedores
+
+**Windows (CMD):**
+```cmd
+start.bat
+```
+
+**Windows (PowerShell):**
+```powershell
+.\start.ps1
+```
+
+**Linux/Mac:**
+```bash
+docker-compose up -d
+```
+
+### Paso 2: Esperar la Inicialización
+
+En la primera ejecución, el sistema:
+1. Construye los contenedores de Docker
+2. Descarga el modelo LLM (~4GB) - esto puede tomar varios minutos
+3. Inicia todos los servicios
+
+Puedes ver el progreso con:
+```bash
+docker-compose logs -f
+```
+
+### Paso 3: Acceder a la Aplicación
+
+| Servicio | URL |
+|----------|-----|
+| Interfaz Web (Streamlit) | http://localhost:8501 |
+| API (Swagger) | http://localhost:8000/docs |
+
+### Comandos Útiles
+
+```bash
+docker-compose up       # Iniciar todos los servicios
+docker-compose up -d    # Iniciar en segundo plano
+docker-compose down     # Detener todos los servicios
+docker-compose logs -f  # Ver logs en tiempo real
+docker-compose ps       # Ver estado de los contenedores
+```
+
+---
+
+## Arquitectura
 
 ```
 automl_agent/
 │
-├── main.py                    # Entry point
-├── config.yaml                # Configuration (budget, metrics, limits)
+├── main.py                    # Punto de entrada
+├── config.yaml                # Configuración (budget, métricas, límites)
 │
 ├── orchestrator/
-│   ├── planner.py             # LLM-based decision maker
-│   └── state.py               # Global system state
+│   ├── planner.py             # Decisor basado en LLM
+│   └── state.py               # Estado global del sistema
 │
 ├── agents/
-│   ├── data_agent.py          # Data analysis & preprocessing
-│   ├── modeling_agent.py      # Pipeline generation
-│   ├── hpo_agent.py           # Hyperparameter optimization (FLAML/Optuna)
-│   └── eval_agent.py          # Model evaluation & comparison
+│   ├── data_agent.py          # Análisis de datos y preprocesamiento
+│   ├── modeling_agent.py      # Generación de pipelines
+│   ├── hpo_agent.py           # Optimización de hiperparámetros (FLAML/Optuna)
+│   └── eval_agent.py          # Evaluación y comparación de modelos
 │
 ├── tools/
-│   ├── data_utils.py          # Data loading, splitting, validation
-│   ├── preprocessing.py       # Encoders, scaling, imputation
-│   ├── metrics.py             # Evaluation metrics
-│   └── logging.py             # MLflow integration
+│   ├── data_utils.py          # Carga, división y validación de datos
+│   ├── preprocessing.py       # Encoders, escalado, imputación
+│   ├── metrics.py             # Métricas de evaluación
+│   └── logging.py             # Integración con MLflow
 │
 ├── memory/
-│   └── runs.json              # Historical runs
+│   └── runs.json              # Historial de ejecuciones
 │
 ├── prompts/
-│   └── planner.txt            # LLM orchestrator prompt
+│   └── planner.txt            # Prompt del orquestador LLM
 │
 └── output/
-    ├── model.joblib           # Final model
-    ├── metrics.json           # Results
-    └── run_summary.json       # Execution trace
+    ├── model.joblib           # Modelo final
+    ├── metrics.json           # Resultados
+    └── run_summary.json       # Traza de ejecución
 ```
 
-## Technology Stack
+## Stack Tecnológico
 
 ### LLM / Planner
-- `openai` - GPT-4 for orchestration decisions
+- `ollama` - LLM local (predeterminado, gratuito, sin API key)
+- `openai` - GPT-4 para decisiones de orquestación
+- `azure` - Azure OpenAI para despliegues empresariales
 
-### AutoML / Search
-- `flaml` - Fast AutoML optimization
-- `optuna` - Hyperparameter tuning
+### AutoML / Búsqueda
+- `flaml` - Optimización AutoML rápida
+- `optuna` - Ajuste de hiperparámetros
 
-### Modeling
-- `scikit-learn` - ML pipelines
+### Modelado
+- `scikit-learn` - Pipelines de ML
 - `lightgbm` - Gradient boosting
 - `xgboost` - Gradient boosting
 - `catboost` - Gradient boosting
 
-### Data
-- `pandas` - Data manipulation
-- `numpy` - Numerical operations
-- `ydata-profiling` - Data profiling (optional)
+### Datos
+- `pandas` - Manipulación de datos
+- `numpy` - Operaciones numéricas
+- `ydata-profiling` - Perfilado de datos (opcional)
 
-### Evaluation
-- `scikit-learn` - Metrics
-- `mlflow` - Experiment tracking
+### Evaluación
+- `scikit-learn` - Métricas
+- `mlflow` - Tracking de experimentos
 
-### Infrastructure
-- `joblib` - Model serialization
-- `pyyaml` - Configuration
+### Infraestructura
+- `joblib` - Serialización de modelos
+- `pyyaml` - Configuración
 
-## Installation
+## Instalación Local (Alternativa)
 
-1. Clone the repository
-2. Install dependencies:
+Si prefieres ejecutar sin Docker:
+
+### Opción 1: Con Ollama (Gratuito, Sin API Key)
 
 ```bash
+# 1. Instalar Ollama
+curl -fsSL https://ollama.ai/install.sh | sh   # Linux/Mac
+# Windows: Descargar desde https://ollama.ai
+
+# 2. Descargar el modelo
+ollama pull llama3.2
+
+# 3. Instalar dependencias de Python
 pip install -r requirements.txt
+pip install -r requirements-api.txt
+
+# 4. Ejecutar
+python -m automl_agent --data data/customer_churn.csv --target churn
 ```
 
-3. Set up environment variables:
+### Opción 2: Con OpenAI
 
-**For OpenAI:**
 ```bash
+# 1. Instalar dependencias
+pip install -r requirements.txt
+
+# 2. Configurar entorno
 cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
+# Editar .env y agregar tu OPENAI_API_KEY
+
+# 3. Actualizar config.yaml
+# Establecer llm.provider: "openai"
 ```
 
-**For Azure OpenAI:**
+### Opción 3: Con Azure OpenAI
+
 ```bash
 cp .env.example .env
-# Edit .env and add:
+# Editar .env y agregar:
 # - AZURE_OPENAI_ENDPOINT
 # - AZURE_OPENAI_API_KEY
 ```
 
-## Configuration for Azure OpenAI
+## Configuración para Azure OpenAI
 
-If you're using **Azure OpenAI** (e.g., GPT-4o-mini from Azure ML), follow these steps:
+Si estás usando **Azure OpenAI** (ej. GPT-4o-mini desde Azure ML), sigue estos pasos:
 
-### 1. Update `config.yaml`:
+### 1. Actualizar `config.yaml`:
 
 ```yaml
 llm:
   provider: "azure"
-  deployment_name: "gpt-4o-mini"  # Your Azure deployment name
+  deployment_name: "gpt-4o-mini"  # Tu nombre de deployment en Azure
   api_version: "2024-02-15-preview"
   temperature: 0.7
   max_tokens: 2000
 ```
 
-Or use the provided example:
+O usa el ejemplo proporcionado:
 ```bash
 cp automl_agent/config.azure.yaml automl_agent/config.yaml
 ```
 
-### 2. Set environment variables in `.env`:
+### 2. Establecer variables de entorno en `.env`:
 
 ```bash
-AZURE_OPENAI_ENDPOINT=https://your-resource-name.openai.azure.com/
-AZURE_OPENAI_API_KEY=your_azure_openai_api_key_here
+AZURE_OPENAI_ENDPOINT=https://tu-recurso.openai.azure.com/
+AZURE_OPENAI_API_KEY=tu_azure_openai_api_key_aqui
 ```
 
-### 3. Run as normal:
+### 3. Ejecutar normalmente:
 
 ```bash
-python -m automl_agent --data data.csv --target target_column
+python -m automl_agent --data data.csv --target columna_objetivo
 ```
 
-## Quick Start / Testing
+## Prueba Rápida
 
-### 1. Generate Example Dataset
+### 1. Generar Dataset de Ejemplo
 
 ```bash
 python generate_example_data.py
 ```
 
-This creates `data/customer_churn.csv` with:
-- 1000 samples
-- 10 features (numerical + categorical)
-- Binary classification task
-- Some missing values to test preprocessing
+Esto crea `data/customer_churn.csv` con:
+- 1000 muestras
+- 10 features (numéricos + categóricos)
+- Tarea de clasificación binaria
+- Algunos valores faltantes para probar preprocesamiento
 
-### 2. Run Test Script
+### 2. Ejecutar Script de Prueba
 
 ```bash
-# Make sure venv is activated
-source venv/bin/activate
+# Asegúrate de que el venv esté activado
+source venv/bin/activate  # Linux/Mac
+# o: venv\Scripts\activate  # Windows
 
-# Run the test
+# Ejecutar la prueba
 ./test_automl.sh
 ```
 
-Or manually:
+O manualmente:
 
 ```bash
 python -m automl_agent \
@@ -156,103 +232,103 @@ python -m automl_agent \
   --target churn
 ```
 
-### 3. Check Results
+### 3. Revisar Resultados
 
-After the run completes, check:
-- `automl_agent/output/model.joblib` - Best trained model
-- `automl_agent/output/metrics.json` - Performance metrics
-- `automl_agent/output/run_summary.json` - Complete execution trace
+Después de completar la ejecución, revisa:
+- `automl_agent/output/model.joblib` - Mejor modelo entrenado
+- `automl_agent/output/metrics.json` - Métricas de rendimiento
+- `automl_agent/output/run_summary.json` - Traza completa de ejecución
 
-## Usage
+## Uso
 
-### Basic Usage
-
-```bash
-python -m automl_agent \
-  --data path/to/data.csv \
-  --target target_column_name
-```
-
-### With Custom Configuration
+### Uso Básico
 
 ```bash
 python -m automl_agent \
-  --data path/to/data.csv \
-  --target target_column_name \
-  --config path/to/custom_config.yaml \
-  --output path/to/output_dir
+  --data ruta/a/datos.csv \
+  --target nombre_columna_objetivo
 ```
 
-## Configuration
+### Con Configuración Personalizada
 
-Edit `automl_agent/config.yaml` to customize:
+```bash
+python -m automl_agent \
+  --data ruta/a/datos.csv \
+  --target nombre_columna_objetivo \
+  --config ruta/a/config_personalizado.yaml \
+  --output ruta/a/directorio_salida
+```
 
-- **Budget**: Max iterations, time limits, early stopping
-- **LLM**: Model selection, temperature, max tokens
-- **Metrics**: Primary and secondary metrics
-- **Model Families**: Which algorithms to try
-- **HPO**: Optimization engine and parameters
-- **Data**: Train/test split, preprocessing options
-- **Logging**: MLflow settings
+## Configuración
 
-## How It Works
+Edita `automl_agent/config.yaml` para personalizar:
 
-### Workflow
+- **Budget**: Máximo de iteraciones, límites de tiempo, early stopping
+- **LLM**: Selección de modelo, temperatura, max tokens
+- **Metrics**: Métricas primarias y secundarias
+- **Model Families**: Qué algoritmos probar
+- **HPO**: Motor de optimización y parámetros
+- **Data**: División train/test, opciones de preprocesamiento
+- **Logging**: Configuración de MLflow
+
+## Cómo Funciona
+
+### Flujo de Trabajo
 
 ```
 main.py
   ↓
-Data Agent → Analyze dataset, propose preprocessing
+Data Agent → Analizar dataset, proponer preprocesamiento
   ↓
-Planner (LLM) → Decide next action
+Planner (LLM) → Decidir siguiente acción
   ↓
-Modeling Agent → Generate model candidates
+Modeling Agent → Generar candidatos de modelos
   ↓
-HPO Agent → Optimize hyperparameters (FLAML/Optuna)
+HPO Agent → Optimizar hiperparámetros (FLAML/Optuna)
   ↓
-Evaluation Agent → Compare models
+Evaluation Agent → Comparar modelos
   ↓
-Planner → Decide: iterate or stop
+Planner → Decidir: iterar o detener
 ```
 
-### Agent Communication
+### Comunicación entre Agentes
 
-Agents communicate via **structured state** (JSON), not natural language:
+Los agentes se comunican mediante **estado estructurado** (JSON), no lenguaje natural:
 
 ```json
 {
   "action": "run_hpo",
   "parameters": {"model_family": "lightgbm"},
-  "reason": "best trade-off so far"
+  "reason": "mejor balance hasta ahora"
 }
 ```
 
-### What the LLM Does
+### Qué Hace el LLM
 
-✅ Decides which agent to run next
-✅ Prioritizes which models to optimize
-✅ Decides when to stop
+✅ Decide qué agente ejecutar a continuación
+✅ Prioriza qué modelos optimizar
+✅ Decide cuándo detenerse
 
-❌ Does NOT train models
-❌ Does NOT see raw data
-❌ Does NOT calculate metrics
+❌ NO entrena modelos
+❌ NO ve los datos crudos
+❌ NO calcula métricas
 
-### Stopping Conditions
+### Condiciones de Parada
 
-- Budget exhausted (time or iterations)
-- No improvement for N iterations
-- Target score reached
+- Budget agotado (tiempo o iteraciones)
+- Sin mejora durante N iteraciones
+- Score objetivo alcanzado
 
-## Output Artifacts
+## Artefactos de Salida
 
-After completion, check `automl_agent/output/`:
+Después de completar, revisa `automl_agent/output/`:
 
-- `model.joblib` - Best model pipeline
-- `metrics.json` - Evaluation results
-- `run_summary.json` - Complete execution trace
-- `config.json` - Configuration used
+- `model.joblib` - Pipeline del mejor modelo
+- `metrics.json` - Resultados de evaluación
+- `run_summary.json` - Traza completa de ejecución
+- `config.json` - Configuración utilizada
 
-## Example
+## Ejemplo de Uso Programático
 
 ```python
 from automl_agent.main import run_automl
@@ -264,33 +340,33 @@ state = run_automl(
     output_dir="automl_agent/output"
 )
 
-print(f"Best model: {state.best_model['model_name']}")
-print(f"Best score: {state.best_score}")
+print(f"Mejor modelo: {state.best_model['model_name']}")
+print(f"Mejor score: {state.best_score}")
 ```
 
-## Extending
+## Extender el Sistema
 
-### Add a New Agent
+### Agregar un Nuevo Agente
 
-1. Create `agents/new_agent.py`
-2. Implement `execute()` method
-3. Update `planner.txt` to describe when to use it
-4. Add action handler in `main.py`
+1. Crear `agents/nuevo_agente.py`
+2. Implementar método `execute()`
+3. Actualizar `planner.txt` para describir cuándo usarlo
+4. Agregar manejador de acción en `main.py`
 
-### Add Custom Metrics
+### Agregar Métricas Personalizadas
 
-1. Edit `tools/metrics.py`
-2. Add to `CLASSIFICATION_METRICS` or `REGRESSION_METRICS`
-3. Update `config.yaml` to use it
+1. Editar `tools/metrics.py`
+2. Agregar a `CLASSIFICATION_METRICS` o `REGRESSION_METRICS`
+3. Actualizar `config.yaml` para usarla
 
-### Change HPO Engine
+### Cambiar Motor de HPO
 
-In `config.yaml`:
+En `config.yaml`:
 ```yaml
 hpo:
-  engine: "optuna"  # or "flaml"
+  engine: "optuna"  # o "flaml"
 ```
 
-## License
+## Licencia
 
 MIT

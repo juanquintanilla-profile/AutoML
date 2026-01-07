@@ -55,6 +55,7 @@ class JobResultsResponse(BaseModel):
     status: JobStatus
     best_model: Optional[str] = None
     best_score: Optional[float] = None
+    best_params: Optional[Dict[str, Any]] = None
     primary_metric: Optional[str] = None
     all_metrics: Optional[Dict[str, Any]] = None
     total_iterations: Optional[int] = None

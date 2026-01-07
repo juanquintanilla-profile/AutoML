@@ -1,8 +1,8 @@
 # AutoML Agent API + UI
 
-This extends the AutoML Agent with a REST API and web UI, **without modifying the original `automl_agent/` code**.
+Extensión del AutoML Agent con una API REST y una interfaz web, **sin modificar el código original de `automl_agent/`**.
 
-## Architecture
+## Arquitectura
 
 ```
 ┌──────────────┐
@@ -13,94 +13,94 @@ This extends the AutoML Agent with a REST API and web UI, **without modifying th
 │  FastAPI     │  (localhost:8000)
 │  + Logfire   │
 └──────┬───────┘
-       │ Python calls
+       │ Llamadas Python
 ┌──────▼───────┐
-│ automl_agent │  (unchanged)
+│ automl_agent │  (sin cambios)
 └──────────────┘
 ```
 
-## Quick Start
+## Inicio Rápido
 
-### 1. Install Dependencies
+### 1. Instalar Dependencias
 
 ```bash
-# Install base AutoML dependencies
+# Instalar dependencias base de AutoML
 pip install -r requirements.txt
 
-# Install API + UI dependencies
+# Instalar dependencias de API + UI
 pip install -r requirements-api.txt
 ```
 
-### 2. Configure Logfire
+### 2. Configurar Logfire (Opcional)
 
 ```bash
-# Create .env file
+# Crear archivo .env
 cp .env.example .env
 
-# Get free Logfire token from https://logfire.pydantic.dev
-# Add to .env:
-# LOGFIRE_TOKEN=your_token_here
+# Obtener token gratuito en https://logfire.pydantic.dev
+# Agregar a .env:
+# LOGFIRE_TOKEN=tu_token_aqui
 ```
 
-### 3. Start the API
+### 3. Iniciar la API
 
 ```bash
-# Terminal 1: Start FastAPI server
+# Terminal 1: Iniciar servidor FastAPI
 python -m uvicorn api.main:app --reload
 
-# API will be available at http://localhost:8000
-# Swagger docs at http://localhost:8000/docs
+# API disponible en http://localhost:8000
+# Documentación Swagger en http://localhost:8000/docs
 ```
 
-### 4. Start the UI
+### 4. Iniciar la UI
 
 ```bash
-# Terminal 2: Start Streamlit
+# Terminal 2: Iniciar Streamlit
 streamlit run ui/app.py
 
-# UI will open at http://localhost:8501
+# UI se abrirá en http://localhost:8501
 ```
 
-## Usage
+## Uso
 
-### Via Web UI (Streamlit)
+### Vía Interfaz Web (Streamlit)
 
-1. Go to http://localhost:8501
-2. Upload a CSV dataset
-3. Select target column
-4. Click "Start AutoML Job"
-5. Monitor progress in "Job Monitor" tab
-6. View results in "Results" tab
+1. Ir a http://localhost:8501
+2. Subir un dataset CSV
+3. Seleccionar columna objetivo
+4. Hacer clic en "Iniciar Trabajo AutoML"
+5. Monitorear progreso en la pestaña "Monitor de Trabajos"
+6. Ver resultados en la pestaña "Resultados"
 
-### Via API (curl)
+### Vía API (curl)
 
 ```bash
-# Create job
+# Crear trabajo
 curl -X POST "http://localhost:8000/api/v1/jobs" \
   -F "dataset=@data/customer_churn.csv" \
   -F "target_column=churn"
 
-# Response: {"job_id": "abc12345", "status": "pending", ...}
+# Respuesta: {"job_id": "abc12345", "status": "pending", ...}
 
-# Check status
+# Verificar estado
 curl "http://localhost:8000/api/v1/jobs/abc12345/status"
 
-# Get results (when completed)
+# Obtener resultados (cuando esté completado)
 curl "http://localhost:8000/api/v1/jobs/abc12345/results"
 
-# Download model
+# Descargar modelo
 curl "http://localhost:8000/api/v1/jobs/abc12345/download-model" -O
 
-# List all jobs
+# Listar todos los trabajos
 curl "http://localhost:8000/api/v1/jobs"
 ```
 
-### Via Python
+### Vía Python
 
 ```python
 import requests
 
-# Create job
+# Crear trabajo
 with open('data/customer_churn.csv', 'rb') as f:
     response = requests.post(
         'http://localhost:8000/api/v1/jobs',
@@ -110,93 +110,92 @@ with open('data/customer_churn.csv', 'rb') as f:
 
 job_id = response.json()['job_id']
 
-# Poll status
+# Consultar estado
 import time
 while True:
     status = requests.get(f'http://localhost:8000/api/v1/jobs/{job_id}/status').json()
-    print(f"Status: {status['status']}")
+    print(f"Estado: {status['status']}")
 
     if status['status'] in ['completed', 'failed']:
         break
 
     time.sleep(5)
 
-# Get results
+# Obtener resultados
 results = requests.get(f'http://localhost:8000/api/v1/jobs/{job_id}/results').json()
-print(f"Best model: {results['best_model']}")
-print(f"Best score: {results['best_score']}")
+print(f"Mejor modelo: {results['best_model']}")
+print(f"Mejor score: {results['best_score']}")
 ```
 
-## API Endpoints
+## Endpoints de la API
 
-| Method | Endpoint | Description |
+| Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| `GET` | `/` | Health check |
-| `POST` | `/api/v1/jobs` | Create new AutoML job |
-| `GET` | `/api/v1/jobs` | List all jobs |
-| `GET` | `/api/v1/jobs/{id}/status` | Get job status |
-| `GET` | `/api/v1/jobs/{id}/results` | Get job results |
-| `GET` | `/api/v1/jobs/{id}/logs` | Get job logs |
-| `GET` | `/api/v1/jobs/{id}/download-model` | Download trained model |
+| `GET` | `/` | Verificación de salud |
+| `POST` | `/api/v1/jobs` | Crear nuevo trabajo AutoML |
+| `GET` | `/api/v1/jobs` | Listar todos los trabajos |
+| `GET` | `/api/v1/jobs/{id}/status` | Obtener estado del trabajo |
+| `GET` | `/api/v1/jobs/{id}/results` | Obtener resultados del trabajo |
+| `GET` | `/api/v1/jobs/{id}/logs` | Obtener logs del trabajo |
+| `GET` | `/api/v1/jobs/{id}/download-model` | Descargar modelo entrenado |
 
-Full API documentation: http://localhost:8000/docs
+Documentación completa de la API: http://localhost:8000/docs
 
-## Monitoring with Logfire
+## Monitoreo con Logfire
 
-All API requests, LLM calls, and AutoML jobs are automatically traced with Logfire:
+Todas las solicitudes a la API, llamadas al LLM y trabajos de AutoML se rastrean automáticamente con Logfire:
 
-1. Sign up at https://logfire.pydantic.dev (free tier available)
-2. Get your token and add to `.env` file:
+1. Registrarse en https://logfire.pydantic.dev (nivel gratuito disponible)
+2. Obtener tu token y agregarlo al archivo `.env`:
    ```bash
-   LOGFIRE_TOKEN=your_token_here
+   LOGFIRE_TOKEN=tu_token_aqui
    ```
-3. Start the API (Logfire will auto-configure)
-4. Run some AutoML jobs
-5. View real-time traces in the Logfire dashboard
+3. Iniciar la API (Logfire se configurará automáticamente)
+4. Ejecutar algunos trabajos de AutoML
+5. Ver trazas en tiempo real en el dashboard de Logfire
 
-You'll see:
-- **LLM Tokens and Costs**: Token usage, model costs, and latency for all OpenAI/Azure calls
-- **API Requests**: All HTTP requests/responses with timing
-- **Job Execution**: Complete AutoML job timelines with agent transitions
-- **Errors**: Full stack traces with context
-- **Performance**: Response times, throughput, and bottlenecks
+Podrás ver:
+- **Tokens y Costos del LLM**: Uso de tokens, costos del modelo y latencia para todas las llamadas a OpenAI/Azure
+- **Solicitudes API**: Todas las solicitudes/respuestas HTTP con tiempos
+- **Ejecución de Trabajos**: Líneas de tiempo completas de trabajos AutoML con transiciones de agentes
+- **Errores**: Stack traces completos con contexto
+- **Rendimiento**: Tiempos de respuesta, throughput y cuellos de botella
 
-The PlannerAgent automatically instruments all OpenAI API calls, so you'll see detailed
-token usage graphs in the "LLM Tokens and Costs" dashboard.
+El PlannerAgent instrumenta automáticamente todas las llamadas a la API de OpenAI, por lo que verás gráficos detallados de uso de tokens en el dashboard "LLM Tokens and Costs".
 
-## Outputs
+## Salidas
 
-Job artifacts are saved in `outputs/{job_id}/`:
-- `model.joblib` - Trained model
-- `metrics.json` - Evaluation metrics
-- `run_summary.json` - Full execution summary
-- `config.json` - Configuration used
+Los artefactos de los trabajos se guardan en `outputs/{job_id}/`:
+- `model.joblib` - Modelo entrenado
+- `metrics.json` - Métricas de evaluación
+- `run_summary.json` - Resumen completo de ejecución
+- `config.json` - Configuración utilizada
 
-The SQLite database is at `outputs/jobs.db`.
+La base de datos SQLite está en `outputs/jobs.db`.
 
-## What Changed?
+## ¿Qué Cambió?
 
-**Nothing in `automl_agent/`!** The original code is completely untouched.
+**¡Nada en `automl_agent/`!** El código original está completamente intacto.
 
-New files:
-- `api/` - FastAPI application
-- `ui/` - Streamlit application
-- `requirements-api.txt` - Additional dependencies
-- `outputs/` - Job outputs and database
+Archivos nuevos:
+- `api/` - Aplicación FastAPI
+- `ui/` - Aplicación Streamlit
+- `requirements-api.txt` - Dependencias adicionales
+- `outputs/` - Salidas de trabajos y base de datos
 
-## Production Deployment
+## Despliegue en Producción
 
-For production, consider:
+Para producción, considerar:
 
-1. **Environment variables**: Use proper secret management
-2. **Database**: Switch from SQLite to PostgreSQL
-3. **File storage**: Use S3 or similar for datasets/models
-4. **Queue**: Add Celery + Redis for robust job queue
-5. **Auth**: Add authentication/authorization
-6. **CORS**: Restrict to specific origins
-7. **HTTPS**: Use reverse proxy (nginx) with SSL
+1. **Variables de entorno**: Usar gestión adecuada de secretos
+2. **Base de datos**: Cambiar de SQLite a PostgreSQL
+3. **Almacenamiento de archivos**: Usar S3 o similar para datasets/modelos
+4. **Cola**: Agregar Celery + Redis para cola de trabajos robusta
+5. **Autenticación**: Agregar autenticación/autorización
+6. **CORS**: Restringir a orígenes específicos
+7. **HTTPS**: Usar proxy reverso (nginx) con SSL
 
-Example Docker Compose:
+Ejemplo de Docker Compose:
 ```yaml
 version: '3.8'
 services:
@@ -214,18 +213,18 @@ services:
       - "8501:8501"
 ```
 
-## Troubleshooting
+## Solución de Problemas
 
-**API won't start:**
-- Check if port 8000 is available
-- Verify `.env` has valid `LOGFIRE_TOKEN`
-- Ensure `requirements-api.txt` is installed
+**La API no inicia:**
+- Verificar si el puerto 8000 está disponible
+- Verificar que `.env` tenga un `LOGFIRE_TOKEN` válido (o eliminar la variable si no se usa)
+- Asegurar que `requirements-api.txt` esté instalado
 
-**Jobs fail:**
-- Check `automl_agent/config.yaml` is valid
-- Verify dataset has correct format
-- Check Logfire dashboard for detailed errors
+**Los trabajos fallan:**
+- Verificar que `automl_agent/config.yaml` sea válido
+- Verificar que el dataset tenga el formato correcto
+- Revisar el dashboard de Logfire para errores detallados
 
-**UI can't connect:**
-- Ensure API is running on port 8000
-- Check CORS settings in `api/main.py`
+**La UI no puede conectarse:**
+- Asegurar que la API esté corriendo en el puerto 8000
+- Verificar configuración de CORS en `api/main.py`

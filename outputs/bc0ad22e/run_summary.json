@@ -1,0 +1,319 @@
+{
+  "run_date": "2026-01-03T20:28:14.026667",
+  "config": {
+    "budget": {
+      "max_iterations": 10,
+      "max_time_seconds": 3600,
+      "max_trials_per_model": 50,
+      "early_stopping_rounds": 3
+    },
+    "llm": {
+      "provider": "azure",
+      "deployment_name": "gpt-4o-mini",
+      "api_version": "2025-01-01-preview",
+      "temperature": 0.7,
+      "max_tokens": 2000
+    },
+    "metrics": {
+      "primary": "r2",
+      "secondary": [
+        "rmse",
+        "mae"
+      ],
+      "task_type": "regression"
+    },
+    "model_families": [
+      "lightgbm",
+      "xgboost",
+      "catboost",
+      "random_forest",
+      "logistic_regression"
+    ],
+    "hpo": {
+      "engine": "flaml",
+      "n_trials": 50,
+      "time_budget": 300
+    },
+    "data": {
+      "test_size": 0.2,
+      "validation_size": 0.2,
+      "random_state": 42,
+      "stratify": true
+    },
+    "preprocessing": {
+      "auto_detect": true,
+      "handle_missing": true,
+      "handle_categorical": true,
+      "scale_features": true,
+      "remove_outliers": false
+    },
+    "logging": {
+      "use_mlflow": true,
+      "mlflow_tracking_uri": "./mlruns",
+      "experiment_name": "automl_experiment",
+      "log_level": "INFO"
+    },
+    "output": {
+      "save_model": true,
+      "save_metrics": true,
+      "save_summary": true,
+      "generate_report": false
+    }
+  },
+  "state": {
+    "status": "completed",
+    "iteration": 5,
+    "best_score": 0.667239373323304,
+    "best_model": "catboost",
+    "total_time": 1234.099584,
+    "total_trials": 4,
+    "iterations_without_improvement": 0
+  },
+  "optimized_models": [
+    {
+      "model_name": "lightgbm",
+      "best_params": {
+        "n_estimators": 158,
+        "max_depth": 4,
+        "min_child_weight": 0.16138123169993357,
+        "learning_rate": 0.0299881000583284,
+        "subsample": 0.7078375337657192,
+        "colsample_bylevel": 0.7649776809564957,
+        "colsample_bytree": 0.6821818225626607,
+        "reg_alpha": 0.008580727226237874,
+        "reg_lambda": 0.003504920958827029
+      },
+      "optimization_score": 0.34256395909694,
+      "optimization_method": "flaml"
+    },
+    {
+      "model_name": "xgboost",
+      "best_params": {
+        "n_estimators": 158,
+        "max_depth": 4,
+        "min_child_weight": 0.16138123169993357,
+        "learning_rate": 0.0299881000583284,
+        "subsample": 0.7078375337657192,
+        "colsample_bylevel": 0.7649776809564957,
+        "colsample_bytree": 0.6821818225626607,
+        "reg_alpha": 0.008580727226237874,
+        "reg_lambda": 0.003504920958827029
+      },
+      "optimization_score": 0.34256395909694,
+      "optimization_method": "flaml"
+    },
+    {
+      "model_name": "catboost",
+      "best_params": {
+        "n_estimators": 189,
+        "max_depth": 5,
+        "min_child_weight": 0.705813945489344,
+        "learning_rate": 0.0483441149250054,
+        "subsample": 0.7612921029814611,
+        "colsample_bylevel": 0.8428645700168348,
+        "colsample_bytree": 0.7308520630305568,
+        "reg_alpha": 0.005443028272955025,
+        "reg_lambda": 0.0037926676631994693
+      },
+      "optimization_score": 0.34432597582870283,
+      "optimization_method": "flaml"
+    },
+    {
+      "model_name": "random_forest",
+      "best_params": {
+        "n_estimators": 189,
+        "max_depth": 5,
+        "min_child_weight": 0.705813945489344,
+        "learning_rate": 0.0483441149250054,
+        "subsample": 0.7612921029814611,
+        "colsample_bylevel": 0.8428645700168348,
+        "colsample_bytree": 0.7308520630305568,
+        "reg_alpha": 0.005443028272955025,
+        "reg_lambda": 0.0037926676631994693
+      },
+      "optimization_score": 0.34432597582870283,
+      "optimization_method": "flaml"
+    }
+  ],
+  "best_model": {
+    "model_name": "catboost",
+    "best_params": {
+      "n_estimators": 189,
+      "max_depth": 5,
+      "min_child_weight": 0.705813945489344,
+      "learning_rate": 0.0483441149250054,
+      "subsample": 0.7612921029814611,
+      "colsample_bylevel": 0.8428645700168348,
+      "colsample_bytree": 0.7308520630305568,
+      "reg_alpha": 0.005443028272955025,
+      "reg_lambda": 0.0037926676631994693
+    },
+    "optimization_score": 0.34432597582870283
+  },
+  "history": [
+    {
+      "iteration": 1,
+      "action": "run_data_agent",
+      "result": {
+        "dataset_summary": {
+          "n_rows": 545,
+          "n_features": 12,
+          "target_column": "price",
+          "feature_types": {
+            "area": "int64",
+            "bedrooms": "int64",
+            "bathrooms": "int64",
+            "stories": "int64",
+            "mainroad": "object",
+            "guestroom": "object",
+            "basement": "object",
+            "hotwaterheating": "object",
+            "airconditioning": "object",
+            "parking": "int64",
+            "prefarea": "object",
+            "furnishingstatus": "object"
+          },
+          "missing_values": {
+            "area": 0,
+            "bedrooms": 0,
+            "bathrooms": 0,
+            "stories": 0,
+            "mainroad": 0,
+            "guestroom": 0,
+            "basement": 0,
+            "hotwaterheating": 0,
+            "airconditioning": 0,
+            "parking": 0,
+            "prefarea": 0,
+            "furnishingstatus": 0
+          },
+          "target_distribution": {
+            "mean": 4766729.247706422,
+            "std": 1870439.6156573922,
+            "min": 1750000.0,
+            "max": 13300000.0
+          },
+          "correlations": {},
+          "outliers": {},
+          "task_type": "regression"
+        },
+        "preprocessing_plan": {
+          "handle_missing": [],
+          "encode_categorical": [
+            {
+              "column": "mainroad",
+              "strategy": "onehot",
+              "cardinality": 2
+            },
+            {
+              "column": "guestroom",
+              "strategy": "onehot",
+              "cardinality": 2
+            },
+            {
+              "column": "basement",
+              "strategy": "onehot",
+              "cardinality": 2
+            },
+            {
+              "column": "hotwaterheating",
+              "strategy": "onehot",
+              "cardinality": 2
+            },
+            {
+              "column": "airconditioning",
+              "strategy": "onehot",
+              "cardinality": 2
+            },
+            {
+              "column": "prefarea",
+              "strategy": "onehot",
+              "cardinality": 2
+            },
+            {
+              "column": "furnishingstatus",
+              "strategy": "onehot",
+              "cardinality": 3
+            }
+          ],
+          "scale_features": [
+            {
+              "column": "area",
+              "strategy": "standard"
+            },
+            {
+              "column": "bedrooms",
+              "strategy": "standard"
+            },
+            {
+              "column": "bathrooms",
+              "strategy": "standard"
+            },
+            {
+              "column": "stories",
+              "strategy": "standard"
+            },
+            {
+              "column": "parking",
+              "strategy": "standard"
+            }
+          ],
+          "feature_engineering": []
+        }
+      },
+      "timestamp": "2026-01-03T20:07:41.505208"
+    },
+    {
+      "iteration": 2,
+      "action": "run_modeling_agent",
+      "result": {
+        "n_candidates": 4
+      },
+      "timestamp": "2026-01-03T20:07:42.090408"
+    },
+    {
+      "iteration": 3,
+      "action": "run_hpo_agent",
+      "result": {
+        "n_optimized": 4
+      },
+      "timestamp": "2026-01-03T20:27:42.982267"
+    },
+    {
+      "iteration": 4,
+      "action": "run_eval_agent",
+      "result": {
+        "rankings": [
+          {
+            "rank": 1,
+            "model_name": "catboost",
+            "test_score": 0.667239373323304,
+            "overfit_score": 0.3065036526488938
+          },
+          {
+            "rank": 2,
+            "model_name": "random_forest",
+            "test_score": 0.667239373323304,
+            "overfit_score": 0.3065036526488938
+          },
+          {
+            "rank": 3,
+            "model_name": "lightgbm",
+            "test_score": 0.6537631803513222,
+            "overfit_score": 0.23393776821526324
+          },
+          {
+            "rank": 4,
+            "model_name": "xgboost",
+            "test_score": 0.6537631803513222,
+            "overfit_score": 0.23393776821526324
+          }
+        ],
+        "best_model": "catboost",
+        "best_score": 0.667239373323304,
+        "primary_metric": "r2"
+      },
+      "timestamp": "2026-01-03T20:28:13.034783"
+    }
+  ]
+}
