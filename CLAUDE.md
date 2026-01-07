@@ -6,8 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # === Docker (Recommended - No API keys needed) ===
-docker-compose up              # First run downloads model (~4GB)
-# Open http://localhost:8501 for UI, http://localhost:8000/docs for API
+# Windows:
+start.bat                      # Or: .\start.ps1
+# Linux/Mac:
+docker-compose up -d
+
+# First run downloads LLM model (~4GB)
+# UI: http://localhost:8501 | API: http://localhost:8000/docs
+
+docker-compose down            # Stop services
+docker-compose logs -f         # View logs
 
 # === Local Development ===
 # Run AutoML on dataset (CLI)
@@ -56,34 +64,43 @@ Each agent runs ONCE per stage. PlannerAgent decides whether to iterate (re-run 
 
 Agents communicate through structured state (JSON), NOT natural language. Each agent updates specific parts of `AutoMLState`, and the main loop coordinates execution based on planner decisions.
 
+**Key AutoMLState fields** (`orchestrator/state.py`):
+- `dataset_summary`, `preprocessing_plan` - Data analysis output
+- `pipeline_candidates`, `optimized_models`, `evaluation_results` - Model pipeline data
+- `best_model`, `best_score` - Current best performer
+- `iteration`, `iterations_without_improvement` - Loop control
+- `history` - Action/result audit trail
+
 ### Workflow Stage Flags
 
 PlannerAgent enforces sequential execution via flags in state:
 - `data_analyzed`, `candidates_generated`, `models_optimized`, `models_evaluated`
 - `next_required_action` field tells planner what MUST happen next
-- See `automl_agent/orchestrator/planner.py:161-182`
+- See `_prepare_state_summary()` in `automl_agent/orchestrator/planner.py`
 
 ## Critical Implementation Details
 
-1. **Task Type Detection** (`automl_agent/tools/data_utils.py:infer_task_type`):
-   - Auto-detects classification vs regression based on target column
+1. **Task Type Detection** (`automl_agent/tools/data_utils.py`):
+   - `infer_task_type()` auto-detects classification vs regression based on target column
    - Classification: accuracy/f1/precision/recall metrics, stratified splits, `y.astype(int)`
    - Regression: r2/rmse/mae metrics, `y.astype(float)`
-   - Task type set in `main.py:157-172` after inferring from target
+   - Task type set in `run_automl()` in `main.py` after inferring from target
 
 2. **FLAML Type Requirements** (`automl_agent/agents/hpo_agent.py`):
    - Classification: target must be `int`
    - Regression: target must be `float`
    - Target prepared via `prepare_target()` in `tools/data_utils.py`
 
-3. **LLM Provider Configuration** (`automl_agent/orchestrator/planner.py:42-87`):
-   - Set `llm.provider` in `config.yaml` to "ollama", "openai", or "azure"
+3. **LLM Provider Configuration** (`automl_agent/orchestrator/planner.py`):
+   - Auto-detects provider: Azure > OpenAI > Ollama (fallback based on env vars)
    - Ollama (default): free, local - requires `ollama_model` and `ollama_host`
+     - Local: `ollama_host: "http://localhost:11434"`
+     - Docker: `ollama_host: "http://ollama:11434"` (uses Docker service name)
    - OpenAI: requires `OPENAI_API_KEY` env var and `model` name
-   - Azure: requires `AZURE_OPENAI_*` env vars, `deployment_name` and `api_version`
+   - Azure: requires `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `deployment_name` and `api_version`
 
-4. **Planner Fallback** (`automl_agent/orchestrator/planner.py:252-303`):
-   - If LLM fails to respond, rule-based `_fallback_decision()` ensures workflow continues
+4. **Planner Fallback** (`automl_agent/orchestrator/planner.py`):
+   - If LLM fails to respond, `_fallback_decision()` ensures workflow continues
    - Follows sequential flow: data_agent → modeling_agent → hpo_agent → eval_agent → stop
 
 ## Output Locations
@@ -142,10 +159,21 @@ The FastAPI server (`api/main.py`) exposes:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/jobs` | POST | Create new AutoML job (upload CSV + target column) |
-| `/jobs/{job_id}` | GET | Get job status and results |
-| `/jobs/{job_id}/model` | GET | Download trained model (.joblib) |
-| `/health` | GET | Health check |
+| `/api/v1/jobs` | POST | Create new AutoML job (upload CSV + target column) |
+| `/api/v1/jobs` | GET | List all jobs (paginated) |
+| `/api/v1/jobs/{job_id}/status` | GET | Get job status |
+| `/api/v1/jobs/{job_id}/results` | GET | Get job results (completed jobs only) |
+| `/api/v1/jobs/{job_id}/logs` | GET | Get job execution logs |
+| `/api/v1/jobs/{job_id}/download-model` | GET | Download trained model (.joblib) |
+| `/` | GET | Health check |
 | `/docs` | GET | Swagger UI documentation |
 
 Jobs are stored in SQLite (`outputs/jobs.db`) with results in `outputs/{job_id}/`.
+
+## Supported Data Formats
+
+The system can load datasets in multiple formats:
+- CSV (`.csv`)
+- Parquet (`.parquet`)
+- Excel (`.xlsx`, `.xls`)
+- JSON (`.json`)

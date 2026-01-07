@@ -1,0 +1,63 @@
+{
+  "budget": {
+    "max_iterations": 10,
+    "max_time_seconds": 3600,
+    "max_trials_per_model": 50,
+    "early_stopping_rounds": 3
+  },
+  "llm": {
+    "provider": "ollama",
+    "ollama_model": "llama3.2",
+    "ollama_host": "http://ollama:11434",
+    "deployment_name": "gpt-4o-mini",
+    "api_version": "2025-01-01-preview",
+    "temperature": 0.7,
+    "max_tokens": 2000
+  },
+  "metrics": {
+    "primary": "accuracy",
+    "secondary": [
+      "precision",
+      "recall",
+      "f1"
+    ],
+    "task_type": "classification"
+  },
+  "model_families": [
+    "lightgbm",
+    "xgboost",
+    "catboost",
+    "random_forest",
+    "logistic_regression"
+  ],
+  "hpo": {
+    "engine": "flaml",
+    "n_trials": 50,
+    "time_budget": 300
+  },
+  "data": {
+    "test_size": 0.2,
+    "validation_size": 0.2,
+    "random_state": 42,
+    "stratify": true
+  },
+  "preprocessing": {
+    "auto_detect": true,
+    "handle_missing": true,
+    "handle_categorical": true,
+    "scale_features": true,
+    "remove_outliers": false
+  },
+  "logging": {
+    "use_mlflow": true,
+    "mlflow_tracking_uri": "./mlruns",
+    "experiment_name": "automl_experiment",
+    "log_level": "INFO"
+  },
+  "output": {
+    "save_model": true,
+    "save_metrics": true,
+    "save_summary": true,
+    "generate_report": false
+  }
+}

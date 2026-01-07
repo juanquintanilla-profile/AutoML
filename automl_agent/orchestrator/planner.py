@@ -41,7 +41,8 @@ class PlannerAgent:
 
         # Initialize LLM client based on provider
         # Supports: ollama (local/free), openai, azure
-        provider = self.llm_config.get("provider", "ollama")
+        # Auto-detect: Azure > OpenAI > Ollama (fallback)
+        provider = self._detect_provider()
 
         if provider == "ollama":
             # Ollama configuration (local LLM, free)
@@ -99,6 +100,37 @@ class PlannerAgent:
 
         # Load system prompt
         self.system_prompt = self._load_system_prompt()
+
+    def _detect_provider(self) -> str:
+        """
+        Auto-detect LLM provider based on available API keys.
+        Priority: Azure > OpenAI > Ollama (fallback)
+
+        Returns:
+            Provider name: "azure", "openai", or "ollama"
+        """
+        # Check if provider is explicitly set in config (not default)
+        config_provider = self.llm_config.get("provider")
+
+        # Check for Azure OpenAI credentials
+        azure_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        azure_key = os.getenv("AZURE_OPENAI_API_KEY")
+        has_azure = azure_endpoint and azure_key and azure_key != "your_azure_api_key_here"
+
+        # Check for OpenAI credentials
+        openai_key = os.getenv("OPENAI_API_KEY")
+        has_openai = openai_key and openai_key != "your_openai_api_key_here"
+
+        # Auto-detect priority: Azure > OpenAI > Ollama
+        if has_azure:
+            print("[AUTO-DETECT] Found Azure OpenAI credentials")
+            return "azure"
+        elif has_openai:
+            print("[AUTO-DETECT] Found OpenAI API key")
+            return "openai"
+        else:
+            print("[AUTO-DETECT] No API keys found, falling back to Ollama (local)")
+            return "ollama"
 
     def _load_system_prompt(self) -> str:
         """Load system prompt from file or use default."""

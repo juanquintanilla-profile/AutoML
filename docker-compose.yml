@@ -67,13 +67,11 @@ services:
     volumes:
       - ./outputs:/app/outputs
       - ./data:/app/data:ro
+    env_file:
+      - .env
     environment:
-      - LLM_PROVIDER=ollama
+      # Ollama fallback (used if no API keys in .env)
       - OLLAMA_HOST=http://ollama:11434
-      # Optional: Override with your own API keys
-      # - OPENAI_API_KEY=${OPENAI_API_KEY}
-      # - AZURE_OPENAI_ENDPOINT=${AZURE_OPENAI_ENDPOINT}
-      # - AZURE_OPENAI_API_KEY=${AZURE_OPENAI_API_KEY}
     restart: unless-stopped
 
 volumes:

@@ -5,11 +5,35 @@ echo "============================================"
 echo "  AutoML Agent - Starting services..."
 echo "============================================"
 
-# Wait for Ollama to be ready (if using Ollama provider)
-if [ "$LLM_PROVIDER" = "ollama" ] || [ -z "$OPENAI_API_KEY" -a -z "$AZURE_OPENAI_API_KEY" ]; then
-    echo "[INFO] Using Ollama as LLM provider"
-    echo "[INFO] Waiting for Ollama to be ready at $OLLAMA_HOST..."
+# Auto-detect LLM provider: Azure > OpenAI > Ollama
+# Check for valid API keys (not placeholder values)
+AZURE_VALID=""
+OPENAI_VALID=""
 
+if [ -n "$AZURE_OPENAI_API_KEY" ] && [ "$AZURE_OPENAI_API_KEY" != "your_azure_api_key_here" ] && [ -n "$AZURE_OPENAI_ENDPOINT" ]; then
+    AZURE_VALID="true"
+fi
+
+if [ -n "$OPENAI_API_KEY" ] && [ "$OPENAI_API_KEY" != "your_openai_api_key_here" ]; then
+    OPENAI_VALID="true"
+fi
+
+# Determine provider
+if [ -n "$AZURE_VALID" ]; then
+    echo "[AUTO-DETECT] Found Azure OpenAI credentials"
+    echo "[INFO] Using Azure OpenAI as LLM provider"
+    LLM_PROVIDER="azure"
+elif [ -n "$OPENAI_VALID" ]; then
+    echo "[AUTO-DETECT] Found OpenAI API key"
+    echo "[INFO] Using OpenAI as LLM provider"
+    LLM_PROVIDER="openai"
+else
+    echo "[AUTO-DETECT] No valid API keys found"
+    echo "[INFO] Using Ollama (local) as LLM provider"
+    LLM_PROVIDER="ollama"
+
+    # Wait for Ollama to be ready
+    echo "[INFO] Waiting for Ollama to be ready at $OLLAMA_HOST..."
     max_attempts=60
     attempt=0
     while [ $attempt -lt $max_attempts ]; do
@@ -27,9 +51,8 @@ if [ "$LLM_PROVIDER" = "ollama" ] || [ -z "$OPENAI_API_KEY" -a -z "$AZURE_OPENAI
     fi
 fi
 
-# Update config to use environment-provided Ollama host
+# Update config to use environment-provided Ollama host (for fallback)
 if [ -n "$OLLAMA_HOST" ]; then
-    echo "[INFO] Configuring Ollama host: $OLLAMA_HOST"
     sed -i "s|ollama_host:.*|ollama_host: \"$OLLAMA_HOST\"|g" automl_agent/config.yaml
 fi
 

@@ -24,9 +24,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Final stage
 FROM python:3.11-slim
 
-# Install runtime dependencies
+# Install runtime dependencies (libgomp1 required for LightGBM)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy virtual environment from builder
@@ -58,8 +59,7 @@ EXPOSE 8000 8501
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Default to Ollama provider (can be overridden)
-ENV LLM_PROVIDER=ollama
+# Ollama fallback host (used if no API keys found)
 ENV OLLAMA_HOST=http://ollama:11434
 
 # Healthcheck

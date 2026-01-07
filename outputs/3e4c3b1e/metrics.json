@@ -1,0 +1,6 @@
+{
+  "best_model": null,
+  "best_score": 0.0,
+  "primary_metric": "accuracy",
+  "all_results": []
+}
