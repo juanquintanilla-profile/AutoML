@@ -68,7 +68,9 @@ services:
       - ./outputs:/app/outputs
       - ./data:/app/data:ro
     env_file:
-      - .env
+      # Make .env optional - system will use Ollama by default if no API keys provided
+      - path: .env
+        required: false
     environment:
       # Ollama fallback (used if no API keys in .env)
       - OLLAMA_HOST=http://ollama:11434
