@@ -7,6 +7,8 @@ Sistema multi-agente de AutoML que utiliza orquestación basada en LLM para auto
 ### Requisitos Previos
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) instalado y en ejecución
 
+**NOTA IMPORTANTE**: No necesitas configurar ningún archivo `.env` ni claves API para empezar. El sistema usa **Ollama** (LLM local gratuito) por defecto. Solo necesitas el archivo `.env` si quieres usar OpenAI o Azure OpenAI.
+
 ### Paso 1: Generar y Ejecutar los Contenedores
 
 **Windows (CMD):**
@@ -198,6 +200,22 @@ AZURE_OPENAI_API_KEY=tu_azure_openai_api_key_aqui
 ```bash
 python -m automl_agent --data data.csv --target columna_objetivo
 ```
+
+## Selección Automática de Proveedor LLM
+
+El sistema **auto-detecta** el proveedor LLM disponible basándose en las variables de entorno, siguiendo esta prioridad:
+
+1. **Azure OpenAI** (si existen `AZURE_OPENAI_ENDPOINT` y `AZURE_OPENAI_API_KEY`)
+2. **OpenAI** (si existe `OPENAI_API_KEY`)
+3. **Ollama** (fallback por defecto - **no requiere API keys**)
+
+Esto significa:
+- **Sin archivo .env**: usa Ollama (local, gratuito)
+- **Con .env vacío**: usa Ollama (local, gratuito)
+- **Con claves Azure en .env**: usa Azure OpenAI automáticamente
+- **Con clave OpenAI en .env**: usa OpenAI automáticamente
+
+No necesitas modificar `config.yaml` para cambiar de proveedor, el sistema lo detecta automáticamente al iniciar.
 
 ## Prueba Rápida
 
