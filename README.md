@@ -1,7 +1,6 @@
 # AutoML Agent
 
-Sistema multi-agente de AutoML que utiliza orquestación basada en LLM para automatizar flujos de trabajo de machine learning.
-
+Sistema multi-agente de AutoML que utiliza orquestación basada en LLM para automatizar flujos de trabajo de machine learning. Toda la documentación detallada en: https://deepwiki.com/search/explica-output-artifacts-en-pa_af63c63e-15ad-42ca-bef7-a0d9b5a3cc21?mode=fast
 ## Cómo Ejecutar la Aplicación
 
 ### Requisitos Previos
